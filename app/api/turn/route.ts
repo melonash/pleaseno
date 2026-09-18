@@ -1,0 +1,45 @@
+import { NextResponse } from "next/server";
+import { decodeState, encodeState } from "@/lib/token";
+import { playTurn, TurnError } from "@/lib/turn";
+import { TUNING } from "@/lib/tuning";
+
+export const runtime = "nodejs";
+
+export async function POST(req: Request) {
+  let body: { sceneId?: unknown; stateToken?: unknown; text?: unknown };
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Bad request." }, { status: 400 });
+  }
+  const sceneId = typeof body.sceneId === "string" ? body.sceneId : "";
+  const text = typeof body.text === "string" ? body.text : "";
+  const prev = typeof body.stateToken === "string" ? decodeState(body.stateToken) : null;
+  const debug = new URL(req.url).searchParams.get("debug") === "1";
+
+  try {
+    const r = await playTurn(sceneId, prev, text);
+    const res: Record<string, unknown> = {
+      npcLine: r.npcLine,
+      mood: r.mood,
+      moodLabel: r.scene.moodLabels[r.mood],
+      attemptsLeft: TUNING.MAX_ATTEMPTS - r.state.attempt,
+      status: r.state.status,
+      closingLine: r.closingLine ?? null,
+      stateToken: encodeState(r.state),
+    };
+    if (debug) {
+      res.debug = { meter: r.state.meter, delta: r.delta, guarded: r.guarded, answers: r.answers };
+    }
+    return NextResponse.json(res);
+  } catch (e) {
+    if (e instanceof TurnError) {
+      return NextResponse.json({ error: e.message }, { status: e.status });
+    }
+    console.error("[turn]", e);
+    const msg = e instanceof Error && /TYPESAFE_API_KEY|GAME_STATE_SECRET/.test(e.message)
+      ? "Server is missing configuration."
+      : "The other person zoned out for a second. Try again.";
+    return NextResponse.json({ error: msg }, { status: 502 });
+  }
+}
