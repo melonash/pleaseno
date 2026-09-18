@@ -14,6 +14,7 @@ function answers(over: Partial<TurnAnswers> = {}): TurnAnswers {
     fairness: { score: 0 },
     amusement: { score: 0 },
     pressure: { score: 0 },
+    bribe: { score: 0 },
     guilt: { score: 0 },
     plausibility: { score: 3 },
     is_stock_line: { noul: 0.05 },
@@ -38,7 +39,7 @@ describe("resolveTurn", () => {
     const r = resolveTurn(gate, newGame(gate), "hi", answers());
     expect(r.delta).toBe(0);
     expect(r.mood).toBe("unmoved");
-    expect(r.npcLine).toBe(gate.lines.unmoved[2]);
+    expect(r.npcLine).toBe(gate.lines.unmoved[2].text);
   });
 
   it("weights a lever pull by the NPC's susceptibility", () => {
@@ -79,7 +80,8 @@ describe("resolveTurn", () => {
     const r = resolveTurn(gate, newGame(gate), "x", answers({ pressure: { score: 3 } }));
     expect(r.delta).toBe(TUNING.MIN_DELTA);
     expect(r.mood).toBe("hostile");
-    expect(r.npcLine).toBe(gate.lines.hostile[1]);
+    // Jev picked h2 (a pressure line) and the lever is pressure, so it stands
+    expect(r.npcLine).toBe(gate.lines.hostile[1].text);
   });
 
   it("nets positive and negative levers, applying plausibility only to the positive part", () => {
@@ -121,6 +123,37 @@ describe("resolveTurn", () => {
 
   it("falls back to the band's first line on an unknown line id", () => {
     const r = resolveTurn(gate, newGame(gate), "x", answers({ line_unmoved: { choice: "zz" } }));
-    expect(r.npcLine).toBe(gate.lines.unmoved[0]);
+    expect(r.npcLine).toBe(gate.lines.unmoved[0].text);
+  });
+
+  it("steers the reply to a line written for the lever the attempt pulled", () => {
+    // A bribe at the gate: hostile band. Jev picked h1 (a pressure line); the bribe line must win instead.
+    const bribeIdx = gate.lines.hostile.findIndex((l) => l.lever === "bribe");
+    const bribeId = `h${bribeIdx + 1}`;
+    const r = resolveTurn(gate, newGame(gate), "here's fifty quid", answers({
+      bribe: { score: 2.5 },
+      line_hostile: { choice: "h1", probabilities: { h1: 0.5, [bribeId]: 0.2 } },
+    }));
+    expect(r.lever).toBe("bribe");
+    expect(r.mood).toBe("hostile");
+    expect(r.npcLine).toBe(gate.lines.hostile[bribeIdx].text);
+  });
+
+  it("keeps Jev's pick when the lever is only faintly pulled", () => {
+    const r = resolveTurn(gate, newGame(gate), "x", answers({ compassion: { score: 0.5 }, line_unmoved: { choice: "u2" } }));
+    expect(r.lever).toBeNull();
+    expect(r.npcLine).toBe(gate.lines.unmoved[1].text);
+  });
+
+  it("prefers a generic line over one aimed at a different lever when no line matches", () => {
+    // fairness pulled at the gate, unmoved band. Jev picked u1 (compassion line). u2 is generic.
+    const r = resolveTurn(gate, newGame(gate), "x", answers({
+      fairness: { score: 1 },
+      line_unmoved: { choice: "u1", probabilities: { u1: 0.4, u2: 0.3, u4: 0.1 } },
+    }));
+    expect(r.lever).toBe("fairness");
+    // the gate has a fairness line in unmoved, so that wins
+    const fairIdx = gate.lines.unmoved.findIndex((l) => l.lever === "fairness");
+    expect(r.npcLine).toBe(gate.lines.unmoved[fairIdx].text);
   });
 });

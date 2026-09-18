@@ -30,6 +30,9 @@ export const TUNING = {
   /** Subtracted when the attempt is a stock line delivered with nothing new. */
   STOCK_PENALTY: 15,
 
+  /** A lever must be pulled at least this hard (0..3) before the reply is steered toward lines written for it. */
+  LEVER_REPLY_MIN_PULL: 1.0,
+
   /** delta <= this reads as hostile. */
   HOSTILE_DELTA: -10,
   /** delta >= this reads as softening. */

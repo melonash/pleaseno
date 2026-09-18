@@ -66,6 +66,17 @@ export const LEVERS = {
       "Aggressive, sustained pressure: multiple threats, intimidation, or an attempt to frighten the NPC into compliance.",
     ],
   },
+  bribe: {
+    label: "bribe",
+    instructions:
+      "How strongly does `current_attempt.text` offer money, gifts, tips, or favours of value in exchange for the outcome? A trade of effort or time (a different date, cooking dinner) is not a bribe; that is fairness.",
+    levels: [
+      "No offer of money, gifts, or favours of value.",
+      "A vague hint that the player could make it worth their while.",
+      "An explicit offer of money, a gift, or a valuable favour in exchange for the outcome.",
+      "A large, specific, or insistent bribe, pressed as the main argument.",
+    ],
+  },
   guilt: {
     label: "guilt",
     instructions:

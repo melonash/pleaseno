@@ -15,18 +15,49 @@ export const BAND_PREFIX: Record<Band, string> = { hostile: "h", unmoved: "u", s
 /** Line bank for one band as Choice criteria: id -> line text. */
 export function lineCriteria(scene: Scene, band: Band): Record<string, string> {
   const out: Record<string, string> = {};
-  scene.lines[band].forEach((text, i) => {
-    out[`${BAND_PREFIX[band]}${i + 1}`] = text;
+  scene.lines[band].forEach((line, i) => {
+    out[`${BAND_PREFIX[band]}${i + 1}`] = line.text;
   });
   return out;
 }
 
-/** Look a chosen line id back up. Falls back to the band's first line. */
-export function lineForId(scene: Scene, band: Band, id: string | undefined): string {
-  const bank = scene.lines[band];
+function lineIndex(id: string | undefined): number {
   const m = id ? /^[husp](\d+)$/.exec(id) : null;
-  const idx = m ? Number(m[1]) - 1 : -1;
-  return bank[idx] ?? bank[0];
+  return m ? Number(m[1]) - 1 : -1;
+}
+
+/**
+ * Pick the NPC's reply from a band. Jev's choice is content-aware, but if the attempt clearly pulled one lever
+ * and the bank has lines written to answer that lever, the reply must be one of those: a bribe gets the bribe
+ * line, not a generic shrug. Among candidates, the one Jev gave the most probability wins.
+ */
+export function pickLine(
+  scene: Scene,
+  band: Band,
+  answer: { choice: string; probabilities?: Record<string, number> },
+  lever: Lever | null,
+): string {
+  const bank = scene.lines[band];
+  const chosen = bank[lineIndex(answer.choice)] ?? bank[0];
+  if (!lever || chosen.lever === lever) return chosen.text;
+  const candidates = bank
+    .map((line, i) => ({ line, id: `${BAND_PREFIX[band]}${i + 1}` }))
+    .filter((c) => c.line.lever === lever);
+  if (candidates.length === 0) {
+    // No line for this lever. If Jev picked a line aimed at a different lever, fall back to a generic one.
+    if (!chosen.lever) return chosen.text;
+    const generic = bank
+      .map((line, i) => ({ line, id: `${BAND_PREFIX[band]}${i + 1}` }))
+      .filter((c) => !c.line.lever);
+    return best(generic, answer.probabilities)?.line.text ?? chosen.text;
+  }
+  return best(candidates, answer.probabilities)?.line.text ?? chosen.text;
+}
+
+function best<T extends { id: string }>(items: T[], probabilities: Record<string, number> | undefined): T | undefined {
+  if (items.length === 0) return undefined;
+  if (!probabilities) return items[0];
+  return items.reduce((a, b) => ((probabilities[b.id] ?? 0) > (probabilities[a.id] ?? 0) ? b : a));
 }
 
 export function buildState(
@@ -72,6 +103,7 @@ export function buildQuestions(scene: Scene) {
     fairness: leverQuestion("fairness"),
     amusement: leverQuestion("amusement"),
     pressure: leverQuestion("pressure"),
+    bribe: leverQuestion("bribe"),
     guilt: leverQuestion("guilt"),
     plausibility: score(
       "How believable is `current_attempt.text` to the NPC, given `scene.situation` and what has already been said in `conversation_so_far`?",

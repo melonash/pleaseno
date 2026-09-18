@@ -2,7 +2,7 @@ import { LEVER_IDS, type Lever } from "./levers";
 import type { Band, Scene } from "./scenes";
 import type { GameState } from "./token";
 import { TUNING } from "./tuning";
-import { lineForId } from "./questions";
+import { pickLine } from "./questions";
 
 /** The subset of Jev's answers that resolution reads. Kept structural so tests can hand-build it. */
 export type TurnAnswers = Record<Lever, { score: number }> & {
@@ -10,11 +10,12 @@ export type TurnAnswers = Record<Lever, { score: number }> & {
   is_stock_line: { noul: number };
   is_meta_instruction: { noul: number };
   contradicts_situation: { noul: number };
-  line_hostile: { choice: string };
-  line_unmoved: { choice: string };
-  line_softening: { choice: string };
-  line_persuaded: { choice: string };
+  line_hostile: LineAnswer;
+  line_unmoved: LineAnswer;
+  line_softening: LineAnswer;
+  line_persuaded: LineAnswer;
 };
+type LineAnswer = { choice: string; probabilities?: Record<string, number> };
 
 export type Resolution = {
   state: GameState;
@@ -23,6 +24,8 @@ export type Resolution = {
   delta: number;
   guarded: boolean;
   instantWin: Lever | null;
+  /** The lever the attempt most clearly pulled (largest absolute contribution, pull at least 1), or null. Drives the reply. */
+  lever: Lever | null;
   /** Each lever's contribution to the delta before plausibility and clamping. */
   contributions: Record<Lever, number>;
   closingLine?: string;
@@ -71,7 +74,7 @@ export function resolveTurn(
   } else {
     let positive = 0;
     let negative = 0;
-    let best = -Infinity;
+    let best = 0;
     for (const id of LEVER_IDS) {
       const pull = clamp(answers[id].score, 0, 3);
       const susceptibility = scene.npc.levers[id];
@@ -79,8 +82,8 @@ export function resolveTurn(
       contributions[id] = Math.round(c);
       if (c > 0) positive += c;
       else negative += c;
-      if (c > best) {
-        best = c;
+      if (pull >= T.LEVER_REPLY_MIN_PULL && Math.abs(c) > best) {
+        best = Math.abs(c);
         dominant = id;
       }
       if (
@@ -101,7 +104,7 @@ export function resolveTurn(
     else if (delta <= T.HOSTILE_DELTA) band = "hostile";
     else if (delta >= T.SOFTENING_DELTA) band = "softening";
     else band = "unmoved";
-    npcLine = lineForId(scene, band, answers[`line_${band}`].choice);
+    npcLine = pickLine(scene, band, answers[`line_${band}`], dominant);
   }
 
   const attempt = prev.attempt + 1;
@@ -124,7 +127,7 @@ export function resolveTurn(
     status,
   };
 
-  return { state, npcLine, mood: band, delta, guarded, instantWin, contributions, closingLine };
+  return { state, npcLine, mood: band, delta, guarded, instantWin, lever: dominant, contributions, closingLine };
 }
 
 function clamp(n: number, lo: number, hi: number): number {

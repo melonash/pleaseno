@@ -34,6 +34,7 @@ export async function POST(req: Request) {
         delta: r.delta,
         guarded: r.guarded,
         instantWin: r.instantWin,
+        lever: r.lever,
         contributions: r.contributions,
         answers: r.answers,
       };
