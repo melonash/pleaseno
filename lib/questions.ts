@@ -106,12 +106,12 @@ export function buildQuestions(scene: Scene) {
     bribe: leverQuestion("bribe"),
     guilt: leverQuestion("guilt"),
     plausibility: score(
-      "How believable is `current_attempt.text` to the NPC, given `scene.situation` and what has already been said in `conversation_so_far`?",
+      "How believable are the factual claims in `current_attempt.text` to the NPC, given `scene.situation` and what has already been said in `conversation_so_far`? Judge only claims about facts (who the player is, what happened, what they will do). An offer, a joke, a plain request, or an acknowledgement makes no factual claim and counts as fully believable.",
       [
         "Obviously false, absurd, or contradicts something the player already said. The NPC would not believe a word.",
         "Stretches belief. The NPC would doubt it and might call it out.",
         "Believable but unverifiable. The NPC could take it or leave it.",
-        "Believable and consistent with the situation and the conversation so far.",
+        "Believable and consistent with the situation and the conversation so far, or makes no factual claim at all.",
       ],
     ),
     is_stock_line: noul(

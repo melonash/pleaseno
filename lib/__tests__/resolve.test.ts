@@ -172,16 +172,28 @@ describe("resolveTurn", () => {
   });
 
   it("steers the reply to a line written for the lever the attempt pulled", () => {
-    // A bribe at the gate: hostile band. Jev picked h1 (a pressure line); the bribe line must win instead.
-    const bribeIdx = gate.lines.hostile.findIndex((l) => l.lever === "bribe");
+    // A bribe to the partner: hostile band. Jev picked h1 (a guilt line); the bribe line must win instead.
+    const bribeIdx = inlaws.lines.hostile.findIndex((l) => l.lever === "bribe");
     const bribeId = `h${bribeIdx + 1}`;
-    const r = resolveTurn(gate, newGame(gate), "here's fifty quid", answers({
+    const r = resolveTurn(inlaws, newGame(inlaws), "I'll buy you a bag", answers({
       bribe: { score: 2.5 },
       line_hostile: { choice: "h1", probabilities: { h1: 0.5, [bribeId]: 0.2 } },
     }));
     expect(r.lever).toBe("bribe");
     expect(r.mood).toBe("hostile");
-    expect(r.npcLine).toBe(gate.lines.hostile[bribeIdx].text);
+    expect(r.npcLine).toBe(inlaws.lines.hostile[bribeIdx].text);
+  });
+
+  it("lets the cop be bought outright and the gate agent only tempted", () => {
+    const cop = getScene("speeding")!;
+    const bought = resolveTurn(cop, newGame(cop), "x", answers({ bribe: { score: 2.7 } }));
+    expect(bought.instantWin).toBe("bribe");
+    expect(bought.state.status).toBe("won");
+    const tempted = resolveTurn(gate, newGame(gate), "x", answers({ bribe: { score: 2.7 } }));
+    expect(tempted.instantWin).toBeNull();
+    // 2.7/3 x 0.4 x 60 = 21.6
+    expect(tempted.delta).toBe(22);
+    expect(tempted.mood).toBe("softening");
   });
 
   it("keeps Jev's pick when the lever is only faintly pulled", () => {

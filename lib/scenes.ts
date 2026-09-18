@@ -40,7 +40,7 @@ const gate: Scene = {
   npc: {
     role: "Gate agent",
     persona:
-      "The gate agent is eleven hours into a double shift. Three passengers have already shouted at her today and one filmed her. She is professional, dry, and not unkind, but she has stopped performing sympathy. She is watched: her supervisor tracks late boarding exceptions per agent, and she has already used one today. Reopening the door means calling the crew, getting a yes from the purser, and re-running the manifest, all of which she can do in ninety seconds if she decides it is worth it. She has decided about two hundred times this year, and only a handful of people have made it worth it.",
+      "The gate agent is eleven hours into a double shift. Three passengers have already shouted at her today and one filmed her. She is professional, dry, and not unkind, but she has stopped performing sympathy. She is watched: her supervisor tracks late boarding exceptions per agent, and she has already used one today. Reopening the door means calling the crew, getting a yes from the purser, and re-running the manifest, all of which she can do in ninety seconds if she decides it is worth it. She has decided about two hundred times this year, and only a handful of people have made it worth it. Twice, a folded note slid under a passport has helped her decide, and she hated herself both times; there is a camera on the pillar behind her.",
     hasHeardAHundredTimes: [
       "I'll miss my connection",
       "my mother is in hospital",
@@ -51,7 +51,7 @@ const gate: Scene = {
       "crying on cue",
       "the plane is RIGHT THERE",
     ],
-    levers: { compassion: 0.8, respect: 1.0, self_interest: 0.9, fairness: 0.4, amusement: 0.6, pressure: -1.0, bribe: -0.6, guilt: -0.5 },
+    levers: { compassion: 0.8, respect: 1.0, self_interest: 0.9, fairness: 0.4, amusement: 0.6, pressure: -1.0, bribe: 0.4, guilt: -0.5 },
   },
   openingLine: "Boarding's closed. Door's shut, sir or madam or whichever, it's shut for everyone.",
   lines: {
@@ -62,7 +62,7 @@ const gate: Scene = {
       L("Okay. I was going to look at the screen, and now I'm going to look at you not getting on this plane."),
       L("I don't know who your uncle is. I know who my supervisor is, and she's about eight metres behind you.", "pressure"),
       L("'Just.' Everyone says 'just.' There is no 'just', there's a manifest, a crew, and me.", "pressure"),
-      L("Is that... are you offering me money? Put it away. Before someone sees it and we both have a much worse evening.", "bribe"),
+      L("Not like that. Not waving it about with a queue behind you and a camera on that pillar. Put it away.", "bribe"),
       L("My fault? I didn't run the security line. I closed a door, on time, like I do forty times a day.", "guilt"),
       L("Hospital. Right. Third one today. I'm sorry, I genuinely am, and the door is still shut.", "compassion"),
     ],
@@ -88,6 +88,7 @@ const gate: Scene = {
       L("...Okay. I'm sorry. That's a real thing, not a bingo square. Give me a second.", "compassion"),
       L("Don't make me laugh, I'm trying to be stern. ...Okay. Hold on.", "amusement"),
       L("You'd take the six a.m. tomorrow if this doesn't work? That's fair, actually. Stand there.", "fairness"),
+      L("...Put that away. Not here. There's a camera on that pillar. ...What was the seat number?", "bribe"),
     ],
     persuaded: [
       L("Purser says yes. Run. Do not stop to thank me, run."),
@@ -98,6 +99,7 @@ const gate: Scene = {
       L("You're the first person today who asked instead of told. Go on. Run.", "respect"),
       L("Fine, you've made it easy, and I'm too tired to make it hard. Go.", "self_interest"),
       L("That got a laugh out of me at hour eleven. That's worth a door. Go.", "amusement"),
+      L("Drop it in the tray with your passport. Don't look at me. Go.", "bribe"),
     ],
   },
   guardLines: [
@@ -120,7 +122,7 @@ const speeding: Scene = {
   npc: {
     role: "Police officer",
     persona:
-      "The officer has twenty minutes left on his shift and a ticket takes twelve of them, most of it paperwork he genuinely hates. He has heard every excuse and privately enjoys ranking them. He is calm, slightly amused, and not looking for a fight. He can give a warning at his discretion and does so a few times a week, mostly for people who do not argue and do not perform. He has a strong reaction to anyone who tries to bribe him, film him, or lawyer him, because those people make his shift longer.",
+      "The officer has twenty minutes left on his shift and a ticket takes twelve of them, most of it paperwork he genuinely hates. He has heard every excuse and privately enjoys ranking them. He is calm, slightly amused, and not looking for a fight. He can give a warning at his discretion and does so a few times a week, mostly for people who do not argue and do not perform. He has a strong reaction to anyone who tries to film him or lawyer him, because those people make his shift longer. He is not above a quiet cash 'fine' paid on the spot, folded into the licence, as long as nobody says the word bribe out loud, nobody is filming, and the amount is not insulting.",
     hasHeardAHundredTimes: [
       "I didn't see the sign",
       "everyone else was going faster",
@@ -131,13 +133,13 @@ const speeding: Scene = {
       "I need the toilet",
       "sudden tears",
     ],
-    levers: { compassion: 0.4, respect: 0.9, self_interest: 1.0, fairness: 0.3, amusement: 0.5, pressure: -1.0, bribe: -1.0, guilt: -0.3 },
+    levers: { compassion: 0.4, respect: 0.9, self_interest: 1.0, fairness: 0.3, amusement: 0.5, pressure: -1.0, bribe: 0.9, guilt: -0.3 },
   },
   openingLine: "Evening. Any idea how fast you were going back there?",
   lines: {
     hostile: [
       L("Lawyer. Okay. Let me get my pen, this just became a longer conversation.", "pressure"),
-      L("Did you just offer me money? No. Don't answer that. Hands on the wheel.", "bribe"),
+      L("Not like that. Not with your phone on the dash and your voice at that volume. Hands on the wheel.", "bribe"),
       L("The radar's calibrated monthly. You want to argue with it, it's in the car, be my guest.", "pressure"),
       L("Your uncle. Sure. Give him my regards on the citation.", "pressure"),
       L("You can film me. I'm going to keep writing, and you're going to have a very boring video.", "pressure"),
@@ -155,6 +157,7 @@ const speeding: Scene = {
       L("Cute. I've got a whole book of those. Licence.", "amusement"),
       L("Grandma. Okay. Everybody's grandma is somewhere tonight. Licence and registration.", "compassion"),
       L("Please and thank you. Nice. Doesn't change the number.", "respect"),
+      L("Twenty. You're going to insult me and then pay the ticket anyway. Try that again, or don't.", "bribe"),
     ],
     softening: [
       L("Huh. Most people argue. Okay. Talk to me.", "respect"),
@@ -166,6 +169,7 @@ const speeding: Scene = {
       L("Yeah. Okay. Take a breath, I'm not going to make that worse. Go on.", "compassion"),
       L("Ha! Alright. That's a new one. Don't push it.", "amusement"),
       L("You'd actually take the course voluntarily? Huh. Okay, talk.", "fairness"),
+      L("...Keep your voice down. How much did you say?", "bribe"),
     ],
     persuaded: [
       L("Warning. Verbal. I don't want to see this car again tonight, and I mean that nicely."),
@@ -175,6 +179,7 @@ const speeding: Scene = {
       L("Go. Drive slow, get there in one piece. That's the deal.", "compassion"),
       L("Honestly, if everyone talked to me like that I'd never write a ticket. Off you go.", "respect"),
       L("Ha. Fine. That one earned it. Thirty, though. I mean it.", "amusement"),
+      L("Fold it into the licence when you hand it back. Slowly. I never saw you.", "bribe"),
     ],
   },
   guardLines: [
