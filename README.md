@@ -17,6 +17,8 @@ Env vars:
 - `TYPESAFE_API_KEY` — from the TypeSafe console. Server only, never shipped to the browser.
 - `GAME_STATE_SECRET` — any long random string (`openssl rand -hex 32`). Signs the game state token so a player cannot edit the meter in dev tools.
 
+Optional: `ANTHROPIC_API_KEY`. When set, each reply is written by Claude Haiku in the character's voice and in response to what the player actually said. Code still decides the outcome and the mood; the model only writes the line, with the authored pick as its reference. If the key is missing, the call fails, times out, or the output looks off, the authored line is used. `?debug=1` shows `generated: true` when a line came from the model.
+
 ## Deploy to Vercel
 
 Import the repo, add the two env vars under Settings → Environment Variables, deploy. No other config.

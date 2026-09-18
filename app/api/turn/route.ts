@@ -53,6 +53,7 @@ export async function POST(req: Request) {
         guarded: r.guarded,
         instantWin: r.instantWin,
         lever: r.lever,
+        generated: r.generated,
         contributions: r.contributions,
         answers: r.answers,
       };

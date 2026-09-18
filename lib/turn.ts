@@ -5,8 +5,9 @@ import type { GameState } from "./token";
 import { TUNING } from "./tuning";
 import { jev } from "./jev";
 import { classifyInput } from "./input";
+import { generateReply } from "./generate";
 
-export type TurnResult = Resolution & { answers: TurnAnswers; scene: Scene };
+export type TurnResult = Resolution & { answers: TurnAnswers; scene: Scene; generated: boolean };
 /** The player said nothing usable. No attempt consumed, no state change. */
 export type NonTurn = { kind: "silence" | "unclear"; npcLine: string; state: GameState; scene: Scene };
 
@@ -39,7 +40,25 @@ export async function playTurn(sceneId: string, prev: GameState | null, rawText:
   }
 
   const resolution = resolveTurn(scene, state, text, answers);
-  return { ...resolution, answers, scene };
+
+  // Optional context-aware line. The outcome above is final; only the wording may change.
+  let generated = false;
+  if (!resolution.guarded) {
+    const line = await generateReply({
+      scene,
+      band: resolution.mood,
+      lever: resolution.lever,
+      transcript: state.transcript,
+      playerText: text,
+      authoredLine: resolution.npcLine,
+    });
+    if (line) {
+      generated = true;
+      resolution.npcLine = line;
+      resolution.state.transcript[resolution.state.transcript.length - 1] = { speaker: "npc", text: line };
+    }
+  }
+  return { ...resolution, answers, scene, generated };
 }
 
 export class TurnError extends Error {
