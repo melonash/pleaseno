@@ -213,6 +213,7 @@ const inlaws: Scene = {
     hostile: [
       L("Wow. Okay. So it's my dad's fault now.", "guilt"),
       L("You were fine on Sunday. You had a beer and did the crossword. Don't get sick at me.", "compassion"),
+      L("Your grandma. Dying. Since when, Tuesday? And you're telling me now, like this? Don't.", "compassion"),
       L("'I always'? Say that again and I'm going alone and telling them why.", "guilt"),
       L("Right, and I go to every single one of your work things and smile. Every one."),
       L("Don't go quiet. Going quiet is worse. Say the thing."),

@@ -87,6 +87,18 @@ describe("resolveTurn", () => {
     expect(r.npcLine).toBe(gate.lines.hostile[pressureIdx].text);
   });
 
+  it("answers a stock sob story with the compassion line even when it landed hostile", () => {
+    // compassion 1.8/3 x 0.8 x 60 = 28.8 x plaus(2 -> 0.8) = 23 ; pressure 1/3 x -1 x 60 = -20 ; stock -15 -> -12 hostile
+    const compIdx = gate.lines.hostile.findIndex((l) => l.lever === "compassion");
+    const r = resolveTurn(gate, newGame(gate), "x", answers({
+      compassion: { score: 1.8 }, pressure: { score: 1 }, plausibility: { score: 2 }, is_stock_line: { noul: 0.95 },
+      line_hostile: { choice: "h1", probabilities: { h1: 0.6 } },
+    }));
+    expect(r.mood).toBe("hostile");
+    expect(r.lever).toBe("compassion");
+    expect(r.npcLine).toBe(gate.lines.hostile[compIdx].text);
+  });
+
   it("answers the strongest pull when the mood is unmoved, even if a weaker lever pushed back", () => {
     // compassion 3 x 0.8 x 60 = 48 x plaus(1 -> 0.6) = 28.8 ; pressure 1.2/3 x -1 x 60 = -24 -> 5 unmoved
     const r = resolveTurn(gate, newGame(gate), "x", answers({ compassion: { score: 3 }, pressure: { score: 1.2 }, plausibility: { score: 1 } }));

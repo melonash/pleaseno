@@ -32,6 +32,8 @@ export const TUNING = {
 
   /** A lever must be pulled at least this hard (0..3) before the reply is steered toward lines written for it. */
   LEVER_REPLY_MIN_PULL: 1.0,
+  /** A lever that explains the mood beats the strongest pull only if pulled within this margin of it. */
+  LEVER_REPLY_MARGIN: 0.5,
 
   /** delta <= this reads as hostile. */
   HOSTILE_DELTA: -10,

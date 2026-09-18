@@ -129,24 +129,20 @@ export function resolveTurn(
 }
 
 /**
- * The lever the reply should answer: the strongest pull, restricted to levers whose effect explains the mood.
- * A hostile reply answers what made them hostile (a threat, a bribe); a warm one answers what warmed them.
+ * The lever the reply should answer. Normally the strongest pull. When the mood is hostile or warm and a lever
+ * that pushed in that direction was pulled nearly as hard, that lever wins: a threat with a whimper of compassion
+ * gets the threat reply, but a sob story that merely insisted gets the sob-story reply.
  */
 function replyLever(pulls: Record<Lever, number>, contributions: Record<Lever, number>, band: Band): Lever | null {
+  const strongest = (ids: Lever[]): Lever | null =>
+    ids.reduce<Lever | null>((best, id) => (best === null || pulls[id] > pulls[best] ? id : best), null);
+  const top = strongest(LEVER_IDS);
+  if (!top || pulls[top] < TUNING.LEVER_REPLY_MIN_PULL) return null;
   const wantSign = band === "hostile" ? -1 : band === "unmoved" ? 0 : 1;
-  const pick = (ids: Lever[]): Lever | null => {
-    let best: Lever | null = null;
-    for (const id of ids) {
-      if (pulls[id] >= TUNING.LEVER_REPLY_MIN_PULL && (best === null || pulls[id] > pulls[best])) best = id;
-    }
-    return best;
-  };
-  if (wantSign !== 0) {
-    const matching = LEVER_IDS.filter((id) => Math.sign(contributions[id]) === wantSign);
-    const m = pick(matching);
-    if (m) return m;
-  }
-  return pick(LEVER_IDS);
+  if (wantSign === 0) return top;
+  const explains = strongest(LEVER_IDS.filter((id) => Math.sign(contributions[id]) === wantSign));
+  if (explains && pulls[explains] >= pulls[top] - TUNING.LEVER_REPLY_MARGIN) return explains;
+  return top;
 }
 
 function clamp(n: number, lo: number, hi: number): number {
