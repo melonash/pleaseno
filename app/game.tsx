@@ -37,8 +37,8 @@ type TurnResponse = {
 const DOTS = ["", "●", "●●", "●●●"];
 
 function strength(v: number | undefined): number {
-  if (!v || v < 0.75) return 0;
-  if (v < 1.75) return 1;
+  if (!v || v < 0.5) return 0;
+  if (v < 1.5) return 1;
   if (v < 2.5) return 2;
   return 3;
 }
