@@ -140,19 +140,26 @@ export function resolveTurn(
 }
 
 /**
- * The lever the reply should answer. Normally the strongest pull. When the mood is hostile or warm and a lever
- * that pushed in that direction was pulled nearly as hard, that lever wins: a threat with a whimper of compassion
- * gets the threat reply, but a sob story that merely insisted gets the sob-story reply.
+ * The lever the reply should answer.
+ * Warm moods (softening, persuaded): the lever that moved them most, by contribution (pull x susceptibility).
+ * Hostile: the backfiring lever pulled hardest, unless a positive lever was pulled clearly harder (a stock sob story
+ * that landed hostile through the stock penalty should still get the sob-story reply).
+ * Unmoved: the strongest pull.
  */
 function replyLever(pulls: Record<Lever, number>, contributions: Record<Lever, number>, band: Band): Lever | null {
-  const strongest = (ids: Lever[]): Lever | null =>
-    ids.reduce<Lever | null>((best, id) => (best === null || pulls[id] > pulls[best] ? id : best), null);
-  const top = strongest(LEVER_IDS);
-  if (!top || pulls[top] < TUNING.LEVER_REPLY_MIN_PULL) return null;
-  const wantSign = band === "hostile" ? -1 : band === "unmoved" ? 0 : 1;
-  if (wantSign === 0) return top;
-  const explains = strongest(LEVER_IDS.filter((id) => Math.sign(contributions[id]) === wantSign));
-  if (explains && pulls[explains] >= pulls[top] - TUNING.LEVER_REPLY_MARGIN) return explains;
+  const eligible = LEVER_IDS.filter((id) => pulls[id] >= TUNING.LEVER_REPLY_MIN_PULL);
+  if (eligible.length === 0) return null;
+  const byPull = (ids: Lever[]) => ids.reduce<Lever | null>((b, id) => (b === null || pulls[id] > pulls[b] ? id : b), null);
+  const byEffect = (ids: Lever[]) =>
+    ids.reduce<Lever | null>((b, id) => (b === null || Math.abs(contributions[id]) > Math.abs(contributions[b]) ? id : b), null);
+  if (band === "softening" || band === "persuaded") {
+    return byEffect(eligible.filter((id) => contributions[id] > 0)) ?? byPull(eligible);
+  }
+  const top = byPull(eligible)!;
+  if (band === "hostile") {
+    const worst = byEffect(eligible.filter((id) => contributions[id] < 0));
+    if (worst && pulls[worst] >= pulls[top] - TUNING.LEVER_REPLY_MARGIN) return worst;
+  }
   return top;
 }
 

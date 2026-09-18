@@ -160,6 +160,13 @@ describe("resolveTurn", () => {
     expect(r.state.status).toBe("playing");
   });
 
+  it("answers a warm mood with the lever that moved them most, not the one pulled hardest", () => {
+    // partner: respect 2.3 x 0.8 = 1.84 ; fairness 2.2 x 1.0 = 2.2 -> fairness
+    const r = resolveTurn(inlaws, newGame(inlaws), "x", answers({ respect: { score: 2.3 }, fairness: { score: 2.2 } }));
+    expect(r.mood).toBe("persuaded");
+    expect(r.lever).toBe("fairness");
+  });
+
   it("uses the winning line's own closing when it has one, else the scene's", () => {
     const idx = inlaws.lines.persuaded.findIndex((l) => l.closing);
     const r = resolveTurn(inlaws, newGame(inlaws), "x", answers({ fairness: { score: 2.7 }, line_persuaded: { choice: `p${idx + 1}` } }));
