@@ -39,7 +39,7 @@ function systemPrompt(scene: Scene, band: Band): string {
   const samples = scene.lines[band].map((l) => `- ${l.text}`).join("\n");
   const outcome =
     band === "persuaded"
-      ? "You have just decided to give them what they want. Say so, in character, and end it."
+      ? "You have just decided to give them what they want. Say so, in character, and end it. Then, on a new line starting with CLOSING:, write one sentence of second-person narration (\"you\", present tense, no dialogue) describing what happens next, consistent with exactly how they won."
       : "You have NOT given them what they want. Do not open the door, waive anything, or agree. The scene continues.";
   return [
     `You write one line of dialogue for a character in a short persuasion game. You are the ${scene.npc.role.toLowerCase()}.`,
@@ -62,7 +62,9 @@ function systemPrompt(scene: Scene, band: Band): string {
   ].join("\n");
 }
 
-export async function generateReply(input: GenerateInput): Promise<string | null> {
+export type Generated = { line: string; closing?: string };
+
+export async function generateReply(input: GenerateInput): Promise<Generated | null> {
   if (!generationEnabled()) return null;
   const { scene, band, lever, transcript, playerText, authoredLine } = input;
 
@@ -76,7 +78,7 @@ export async function generateReply(input: GenerateInput): Promise<string | null
   try {
     const response = await anthropic().messages.create({
       model: MODEL,
-      max_tokens: 120,
+      max_tokens: 200,
       system: [{ type: "text", text: systemPrompt(scene, band), cache_control: { type: "ephemeral" } }],
       messages: [...history, { role: "user", content: userTurn }],
     });
@@ -86,11 +88,14 @@ export async function generateReply(input: GenerateInput): Promise<string | null
       .map((b) => b.text)
       .join(" ")
       .trim()
-      .replace(/^["“”']+|["“”']+$/g, "")
-      .replace(/\s+/g, " ");
-    if (!text || text.length > MAX_CHARS) return null;
+      .replace(/^["“”']+|["“”']+$/g, "");
+    if (!text) return null;
     if (/\b(AI|language model|game|score|lever|attempt)\b/i.test(text)) return null;
-    return text;
+    const m = /^([\s\S]*?)\s*CLOSING:\s*([\s\S]+)$/.exec(text);
+    const line = (m ? m[1] : text).trim();
+    const closing = m ? m[2].trim().replace(/\s+/g, " ") : undefined;
+    if (!line || line.length > MAX_CHARS) return null;
+    return { line, closing: closing && closing.length <= MAX_CHARS ? closing : undefined };
   } catch (e) {
     if (e instanceof Anthropic.APIError) console.warn(`[generate] ${e.status} ${e.message}`);
     else console.warn("[generate]", e);

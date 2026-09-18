@@ -57,7 +57,7 @@ describe("resolveTurn", () => {
     expect(r.instantWin).toBe("fairness");
     expect(r.mood).toBe("persuaded");
     expect(r.state.status).toBe("won");
-    expect(r.closingLine).toBe(inlaws.winClosing);
+    expect(r.closingLine).toBe(inlaws.lines.persuaded[0].closing ?? inlaws.winClosing);
   });
 
   it("does not instant-win on a lever the NPC is lukewarm about, even when pulled hard", () => {
@@ -158,6 +158,16 @@ describe("resolveTurn", () => {
     const r = resolveTurn(gate, newGame(gate), "x", answers({ compassion: { score: 2 }, plausibility: { score: 2 }, is_stock_line: { noul: 0.95 } }));
     expect(r.delta).toBe(11);
     expect(r.state.status).toBe("playing");
+  });
+
+  it("uses the winning line's own closing when it has one, else the scene's", () => {
+    const idx = inlaws.lines.persuaded.findIndex((l) => l.closing);
+    const r = resolveTurn(inlaws, newGame(inlaws), "x", answers({ fairness: { score: 2.7 }, line_persuaded: { choice: `p${idx + 1}` } }));
+    expect(r.closingLine).toBe(inlaws.lines.persuaded[idx].closing);
+    const plainIdx = gate.lines.persuaded.findIndex((l) => !l.closing);
+    const g = resolveTurn(gate, { ...newGame(gate), meter: 49 }, "x", answers({ respect: { score: 1 }, line_persuaded: { choice: `p${plainIdx + 1}` } }));
+    expect(g.state.status).toBe("won");
+    expect(g.closingLine).toBe(gate.winClosing);
   });
 
   it("loses after the final attempt without a win", () => {

@@ -2,8 +2,8 @@ import type { Lever, Susceptibility } from "./levers";
 
 export type Band = "hostile" | "unmoved" | "softening" | "persuaded";
 
-export type Line = { text: string; lever?: Lever };
-const L = (text: string, lever?: Lever): Line => (lever ? { text, lever } : { text });
+export type Line = { text: string; lever?: Lever; closing?: string };
+const L = (text: string, lever?: Lever, closing?: string): Line => ({ text, ...(lever ? { lever } : {}), ...(closing ? { closing } : {}) });
 
 export type Scene = {
   id: string;
@@ -21,7 +21,7 @@ export type Scene = {
     levers: Susceptibility;
   };
   openingLine: string;
-  /** Authored replies per mood band. Jev selects one; it never writes one. A line tagged with a lever answers that lever specifically. */
+  /** Authored replies per mood band. Jev selects one; it never writes one. A line tagged with a lever answers that lever specifically. A persuaded line may carry its own closing so the ending matches how the player won. */
   lines: Record<Band, Line[]>;
   guardLines: string[];
   /** Said when the player types nothing usable ("x", "..."). Costs no attempt. */
@@ -95,13 +95,13 @@ const gate: Scene = {
       L("I haven't said yes. I'm thinking. That's different."),
     ],
     persuaded: [
-      L("Purser says yes. Run. Don't thank me, run."),
+      L("Purser says yes. Run. Don't thank me, run.", undefined, "The door clicks. You run. You are on the plane."),
       L("Boarding pass. Now. If anyone asks, you were in the toilet."),
       L("Fine. You've made it easy and I'm too tired to make it hard. Go.", "self_interest"),
       L("First person today who asked instead of told. Go on. Run.", "respect"),
-      L("Go. Go see them. Don't tell anyone I did this.", "compassion"),
-      L("That got a laugh out of me. That's worth a door. Go.", "amusement"),
-      L("Drop it in the tray with your passport. Don't look at me. Go.", "bribe"),
+      L("Go. Go see them. Don't tell anyone I did this.", "compassion", "The door clicks. She does not look up as you pass. You are on the plane."),
+      L("That got a laugh out of me. That's worth a door. Go.", "amusement", "The door clicks. She is still half smiling as it shuts behind you. You are on the plane."),
+      L("Drop it in the tray with your passport. Don't look at me. Go.", "bribe", "The note is gone before the tray slides back. The door clicks. You are on the plane."),
     ],
   },
   guardLines: [
@@ -184,11 +184,11 @@ const speeding: Scene = {
     persuaded: [
       L("Warning. Verbal. I don't want to see this car again tonight, and I mean that nicely."),
       L("Go on. Thirty means thirty."),
-      L("You've saved me twelve minutes of typing. Off you go. Slowly.", "self_interest"),
+      L("You've saved me twelve minutes of typing. Off you go. Slowly.", "self_interest", "He is back in the cruiser before you have found first gear. The lights go off. You pull away at exactly 30."),
       L("If everyone talked to me like that I'd never write a ticket. Off you go.", "respect"),
-      L("Go. Drive slow, get there in one piece. That's the deal.", "compassion"),
-      L("Ha. Fine. That one earned it. Thirty, though.", "amusement"),
-      L("Fold it into the licence when you hand it back. Slowly. I never saw you.", "bribe"),
+      L("Go. Drive slow, get there in one piece. That's the deal.", "compassion", "He taps the roof twice and steps back. The lights go off. You drive slow, like you said you would."),
+      L("Ha. Fine. That one earned it. Thirty, though.", "amusement", "He is still shaking his head as he walks back. The lights go off. You pull away at exactly 30."),
+      L("Fold it into the licence when you hand it back. Slowly. I never saw you.", "bribe", "The licence comes back lighter. He never looks at it. The lights go off. You pull away, slowly, and do not look in the mirror."),
     ],
   },
   guardLines: [
@@ -268,12 +268,12 @@ const inlaws: Scene = {
       L("I don't love it. But I hear you. What are you actually offering?"),
     ],
     persuaded: [
-      L("Fine. But you're doing the next visit, both days, with a smile. Deal?", "fairness"),
-      L("Okay. Your alternative, your call to my mum. Tonight. Not me, you.", "fairness"),
-      L("Go. Of course go. I'll tell my parents, they'll understand.", "compassion"),
-      L("Thank you for actually hearing me. Okay. Not this weekend.", "respect"),
-      L("I'd honestly rather you come once and mean it than three times and sulk. Fine."),
-      L("You're lucky I like you. Call my mum. Now, while I'm still soft about it."),
+      L("Fine. But you're doing the next visit, both days, with a smile. Deal?", "fairness", "The weekend is off. Next month is not. Your partner writes it on the calendar in pen."),
+      L("Okay. Your alternative, your call to my mum. Tonight. Not me, you.", "fairness", "The weekend is off. You have a phone call to make, and your partner is watching you not make it yet."),
+      L("Go. Of course go. I'll tell my parents, they'll understand.", "compassion", "The weekend is off. Your partner is already texting their mother, and squeezes your hand while doing it."),
+      L("Thank you for actually hearing me. Okay. Not this weekend.", "respect", "The weekend is off. Your partner goes alone, and tells their parents you said hello."),
+      L("I'd honestly rather you come once and mean it than three times and sulk. Fine.", undefined, "The weekend is off. Your partner goes alone, and you are going to mean it next time."),
+      L("You're lucky I like you. Call my mum. Now, while I'm still soft about it.", undefined, "The weekend is off. Your partner hands you their phone with the number already up."),
     ],
   },
   guardLines: [
@@ -289,7 +289,7 @@ const inlaws: Scene = {
     "What? Say that properly.",
     "I didn't get any of that. Again.",
   ],
-  winClosing: "Your partner exhales and leans on the counter. The weekend is off. You have a phone call to make.",
+  winClosing: "Your partner exhales and leans on the counter. The weekend is off.",
   loseClosing: "Your partner picks up their phone and types to their mother: \"We'll both be there Friday.\"",
   winVerdict: "You got out of the weekend, and stayed in the relationship.",
   loseVerdict: "You're going. Bring a good pillow.",

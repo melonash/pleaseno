@@ -44,7 +44,7 @@ export async function playTurn(sceneId: string, prev: GameState | null, rawText:
   // Optional context-aware line. The outcome above is final; only the wording may change.
   let generated = false;
   if (!resolution.guarded) {
-    const line = await generateReply({
+    const gen = await generateReply({
       scene,
       band: resolution.mood,
       lever: resolution.lever,
@@ -52,10 +52,11 @@ export async function playTurn(sceneId: string, prev: GameState | null, rawText:
       playerText: text,
       authoredLine: resolution.npcLine,
     });
-    if (line) {
+    if (gen) {
       generated = true;
-      resolution.npcLine = line;
-      resolution.state.transcript[resolution.state.transcript.length - 1] = { speaker: "npc", text: line };
+      resolution.npcLine = gen.line;
+      resolution.state.transcript[resolution.state.transcript.length - 1] = { speaker: "npc", text: gen.line };
+      if (resolution.state.status === "won" && gen.closing) resolution.closingLine = gen.closing;
     }
   }
   return { ...resolution, answers, scene, generated };

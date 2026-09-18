@@ -64,6 +64,7 @@ export function resolveTurn(
   let delta: number;
   let band: Band;
   let npcLine: string;
+  let lineClosing: string | undefined;
   let instantWin: Lever | null = null;
   let dominant: Lever | null = null;
   let meter = prev.meter;
@@ -110,7 +111,9 @@ export function resolveTurn(
     else if (delta >= T.SOFTENING_DELTA) band = "softening";
     else band = "unmoved";
     dominant = replyLever(pulls, contributions, band);
-    npcLine = pickLine(scene, band, answers[`line_${band}`], dominant);
+    const line = pickLine(scene, band, answers[`line_${band}`], dominant);
+    npcLine = line.text;
+    lineClosing = line.closing;
   }
 
   const attempt = prev.attempt + 1;
@@ -118,7 +121,7 @@ export function resolveTurn(
   let closingLine: string | undefined;
   if (band === "persuaded") {
     status = "won";
-    closingLine = scene.winClosing;
+    closingLine = lineClosing ?? scene.winClosing;
   } else if (attempt >= T.MAX_ATTEMPTS) {
     status = "lost";
     closingLine = scene.loseClosing;

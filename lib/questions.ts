@@ -1,6 +1,6 @@
 import { choice, noul, score } from "@typesafe-ai/sdk";
 import { LEVERS, LEVER_IDS, type Lever } from "./levers";
-import type { Band, Scene } from "./scenes";
+import type { Band, Line, Scene } from "./scenes";
 import type { Speaker } from "./token";
 
 export const BAND_DESCRIPTIONS: Record<Band, string> = {
@@ -36,22 +36,22 @@ export function pickLine(
   band: Band,
   answer: { choice: string; probabilities?: Record<string, number> },
   lever: Lever | null,
-): string {
+): Line {
   const bank = scene.lines[band];
   const chosen = bank[lineIndex(answer.choice)] ?? bank[0];
-  if (!lever || chosen.lever === lever) return chosen.text;
+  if (!lever || chosen.lever === lever) return chosen;
   const candidates = bank
     .map((line, i) => ({ line, id: `${BAND_PREFIX[band]}${i + 1}` }))
     .filter((c) => c.line.lever === lever);
   if (candidates.length === 0) {
     // No line for this lever. If Jev picked a line aimed at a different lever, fall back to a generic one.
-    if (!chosen.lever) return chosen.text;
+    if (!chosen.lever) return chosen;
     const generic = bank
       .map((line, i) => ({ line, id: `${BAND_PREFIX[band]}${i + 1}` }))
       .filter((c) => !c.line.lever);
-    return best(generic, answer.probabilities)?.line.text ?? chosen.text;
+    return best(generic, answer.probabilities)?.line ?? chosen;
   }
-  return best(candidates, answer.probabilities)?.line.text ?? chosen.text;
+  return best(candidates, answer.probabilities)?.line ?? chosen;
 }
 
 function best<T extends { id: string }>(items: T[], probabilities: Record<string, number> | undefined): T | undefined {
