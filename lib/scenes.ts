@@ -33,7 +33,7 @@ const gate: Scene = {
   situation:
     "You ran through the terminal, and you can see the plane. It is right there, attached to the jet bridge. The gate door is closed. A gate agent is typing something with the calm of someone who has already decided. Boarding closed four minutes ago.",
   playerGoal: "Get on that plane.",
-  startMeter: -35,
+  startMeter: -20,
   npc: {
     name: "Dagmar",
     role: "Gate agent",
@@ -123,7 +123,7 @@ const speeding: Scene = {
   situation:
     "Blue lights in the mirror. You were doing 52 in a 30 on a road you have driven a thousand times. The officer is walking up to your window slowly, the way they do. Your licence is already in your hand.",
   playerGoal: "Drive away without a fine.",
-  startMeter: -25,
+  startMeter: -15,
   npc: {
     name: "Officer Dunlap",
     role: "Traffic police",
@@ -215,7 +215,7 @@ const inlaws: Scene = {
   situation:
     "It is Tuesday. Your partner Sam just said, \"So, my parents confirmed, we're going up Friday to Sunday,\" in the tone of someone who has already told you this twice. You did not hear it twice. You do not want to go. Sam's parents are fine. They are just a lot, and it is a whole weekend, and there is a sofa bed involved.",
   playerGoal: "Get out of the weekend without a fight.",
-  startMeter: -20,
+  startMeter: -10,
   npc: {
     name: "Sam",
     role: "Your partner",

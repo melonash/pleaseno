@@ -67,10 +67,11 @@ export function resolveTurn(
     if (delta > 0) {
       delta = Math.round(delta * (T.PLAUSIBILITY_FLOOR + (1 - T.PLAUSIBILITY_FLOOR) * plausibility01));
     }
-    if (answers.offends.noul >= T.NOUL_THRESHOLD) delta -= T.OFFENCE_PENALTY;
+    if (answers.offends.noul >= T.OFFENCE_THRESHOLD) delta -= T.OFFENCE_PENALTY;
     if (answers.approach.choice === prev.lastApproach && delta > 0) {
       delta = Math.round(delta * T.REPEAT_APPROACH_FACTOR);
     }
+    delta = Math.max(T.MIN_DELTA, delta);
     meter += delta;
     if (meter >= T.WIN_THRESHOLD) band = "persuaded";
     else if (delta <= T.HOSTILE_DELTA) band = "hostile";
