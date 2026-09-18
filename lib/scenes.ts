@@ -76,7 +76,7 @@ const gate: Scene = {
       L("No bag. Everyone says no bag. There's still a manifest and a purser who isn't me.", "self_interest"),
       L("Ha. Okay, that was almost funny. Door's still shut.", "amusement"),
       L("You'll 'owe me one'. What am I going to do with that, frame it?", "fairness"),
-      L("Twenty quid? For a door? That's not a bribe, that's an insult. Also no.", "bribe"),
+      L("For a door with a camera pointed at it? That's not a bribe, that's a dare. Also no.", "bribe"),
     ],
     softening: [
       L("...Okay. That's the first sentence today that didn't start with what I have to do.", "respect"),

@@ -184,6 +184,14 @@ describe("resolveTurn", () => {
     expect(r.npcLine).toBe(inlaws.lines.hostile[bribeIdx].text);
   });
 
+  it("denies an instant win when the same attempt backfires harder than it pulls", () => {
+    const cop = getScene("speeding")!;
+    // bribe 2.7/3 x 0.9 x 60 = 48.6 ; pressure 2.7/3 x -1 x 60 = -54 -> -5
+    const r = resolveTurn(cop, newGame(cop), "x", answers({ bribe: { score: 2.7 }, pressure: { score: 2.7 } }));
+    expect(r.instantWin).toBeNull();
+    expect(r.state.status).toBe("playing");
+  });
+
   it("lets the cop be bought outright and the gate agent only tempted", () => {
     const cop = getScene("speeding")!;
     const bought = resolveTurn(cop, newGame(cop), "x", answers({ bribe: { score: 2.7 } }));

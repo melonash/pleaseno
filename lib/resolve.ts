@@ -101,6 +101,8 @@ export function resolveTurn(
     if (answers.is_stock_line.noul >= T.STOCK_THRESHOLD) delta -= T.STOCK_PENALTY;
     delta = Math.max(T.MIN_DELTA, delta);
     meter += delta;
+    // An overwhelming pull does not win if the attempt also backfired hard enough to cancel it out.
+    if (instantWin && delta <= 0) instantWin = null;
 
     if (instantWin || meter >= T.WIN_THRESHOLD) band = "persuaded";
     else if (delta <= T.HOSTILE_DELTA) band = "hostile";

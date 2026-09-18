@@ -5,7 +5,15 @@ import type { PublicScene } from "@/lib/scenes";
 import { LEVER_IDS, LEVER_LABELS, type Lever } from "@/lib/levers";
 
 type Pulls = Partial<Record<Lever, number>>;
-type Msg = { speaker: "npc" | "player"; text: string; moodLabel?: string; closing?: boolean; pulls?: Pulls; lever?: Lever | null; guarded?: boolean };
+type Msg = {
+  speaker: "npc" | "player";
+  text: string;
+  moodLabel?: string;
+  closing?: boolean;
+  pulls?: Pulls;
+  lever?: Lever | null;
+  guarded?: boolean;
+};
 type Status = "playing" | "won" | "lost";
 
 type TurnResponse = {
@@ -22,6 +30,15 @@ type TurnResponse = {
   debug?: unknown;
   error?: string;
 };
+
+const DOTS = ["", "●", "●●", "●●●"];
+
+function strength(v: number | undefined): number {
+  if (!v || v < 0.75) return 0;
+  if (v < 1.75) return 1;
+  if (v < 2.5) return 2;
+  return 3;
+}
 
 export default function Game({
   scenes,
@@ -48,11 +65,13 @@ export default function Game({
   const [error, setError] = useState<string | null>(null);
   const [debug, setDebug] = useState<unknown>(null);
   const [lastPulls, setLastPulls] = useState<Pulls | null>(null);
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const [lastLever, setLastLever] = useState<Lever | null>(null);
+  const [helpOpen, setHelpOpen] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    if (messages.length > 1) formRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [messages, busy, status]);
 
   const reset = useCallback(
@@ -67,6 +86,8 @@ export default function Game({
       setError(null);
       setDebug(null);
       setLastPulls(null);
+      setLastLever(null);
+      window.scrollTo({ top: 0, behavior: "smooth" });
       setTimeout(() => inputRef.current?.focus(), 50);
     },
     [scenes, maxAttempts],
@@ -91,9 +112,12 @@ export default function Game({
       setStatus(data.status);
       setDebug(data.debug ?? null);
       setLastPulls(data.pulls);
+      setLastLever(data.lever);
       setMessages((m) => {
         const withPulls = m.map((msg, i) =>
-          i === m.length - 1 && msg.speaker === "player" ? { ...msg, pulls: data.pulls, lever: data.lever, guarded: data.guarded } : msg,
+          i === m.length - 1 && msg.speaker === "player"
+            ? { ...msg, pulls: data.pulls, lever: data.lever, guarded: data.guarded }
+            : msg,
         );
         const next: Msg[] = [...withPulls, { speaker: "npc", text: data.npcLine, moodLabel: data.moodLabel }];
         if (data.closingLine) next.push({ speaker: "npc", text: data.closingLine, closing: true });
@@ -101,7 +125,6 @@ export default function Game({
       });
       setText("");
     } catch (e) {
-      // Do not consume the attempt: remove the optimistic player message and keep the text.
       setMessages((m) => (m[m.length - 1]?.speaker === "player" ? m.slice(0, -1) : m));
       setError(e instanceof Error ? e.message : "Something went wrong.");
     } finally {
@@ -117,196 +140,191 @@ export default function Game({
     }
   }
 
-  const used = maxAttempts - attemptsLeft;
+  const attemptNo = maxAttempts - attemptsLeft + 1;
 
   return (
-    <main className="mx-auto flex w-full max-w-xl flex-1 flex-col px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))]">
-      <header className="mb-3 flex items-baseline justify-between gap-3">
-        <h1 className="text-sm font-semibold uppercase tracking-widest text-muted">Talk Your Way Out</h1>
-        <span className="text-sm text-muted">
-          {index + 1} / {scenes.length}
-        </span>
-      </header>
+    <main className="game-page">
+      <div className="game-shell">
+        <header className="game-header">
+          <a className="wordmark" href="/" aria-label="Talk Your Way Out home">
+            talk your way out<span>.</span>
+          </a>
+          <button type="button" className="ghost-button" onClick={() => reset(index + 1)}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M16 3h5v5" /><path d="M4 20 21 3" /><path d="M21 16v5h-5" /><path d="M15 15l6 6" /><path d="M4 4l5 5" />
+            </svg>
+            Next scene
+          </button>
+        </header>
 
-      <section className="rounded-2xl border border-border bg-panel p-4 sm:p-5">
-        <h2 className="text-2xl font-bold leading-tight">{scene.title}</h2>
-        <p className="mt-2 text-fg/90">{scene.situation}</p>
-        <p className="mt-3 font-semibold text-accent">{scene.playerGoal}</p>
-        <p className="mt-3 text-sm text-muted">You get {maxAttempts} attempts.</p>
-      </section>
-
-      <Legend pulls={lastPulls} />
-
-      <section className="mt-4 flex flex-1 flex-col gap-3" aria-live="polite">
-        {messages.map((m, i) => (
-          <Bubble key={i} msg={m} npcRole={scene.npcRole} />
-        ))}
-        {busy && (
-          <div className="self-start rounded-2xl rounded-bl-sm border border-border bg-panel px-4 py-3">
-            <span className="typing" aria-label="They are replying">
-              <i /><i /><i />
-            </span>
-          </div>
-        )}
-        {status !== "playing" && (
-          <div className="mt-2 rounded-2xl border border-accent/40 bg-panel-2 p-4 sm:p-5">
-            <p className="text-xs font-semibold uppercase tracking-widest text-muted">
-              {status === "won" ? "You did it" : "Not this time"}
-            </p>
-            <p className="mt-1 text-xl font-bold">{status === "won" ? scene.winVerdict : scene.loseVerdict}</p>
-            <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-              <button
-                type="button"
-                onClick={() => reset(index)}
-                className="flex-1 rounded-xl bg-accent px-4 py-3 text-base font-semibold text-accent-fg active:scale-[0.98]"
-              >
-                Play again
-              </button>
-              <button
-                type="button"
-                onClick={() => reset(index + 1)}
-                className="flex-1 rounded-xl border border-border bg-panel px-4 py-3 text-base font-semibold text-fg active:scale-[0.98]"
-              >
-                Next scene
-              </button>
+        <div className="game-column">
+          <section className="challenge" aria-labelledby="scene-title">
+            <p className="eyebrow">Scene {index + 1} of {scenes.length}</p>
+            <h1 id="scene-title">
+              {scene.title}
+              <span className="heading-period">.</span>
+            </h1>
+            <p className="instruction">{scene.situation}</p>
+            <div className="target">
+              <span className="target-goal">{scene.playerGoal}</span>
+              <span className="target-label">Your goal &middot; {maxAttempts} attempts</span>
             </div>
-          </div>
-        )}
-        {debugOn && debug != null && (
-          <details className="mt-2 rounded-xl border border-border bg-panel p-3 text-xs text-muted">
-            <summary className="cursor-pointer select-none">debug</summary>
-            <pre className="mt-2 overflow-x-auto whitespace-pre-wrap break-words">{JSON.stringify(debug, null, 2)}</pre>
-          </details>
-        )}
-        <div ref={bottomRef} />
-      </section>
+          </section>
 
-      {status === "playing" && (
-        <form
-          className="sticky bottom-0 mt-4 border-t border-border bg-bg pt-3"
-          onSubmit={(e) => {
-            e.preventDefault();
-            void submit();
-          }}
-        >
-          <div className="mb-2 flex items-center justify-between text-sm text-muted">
-            <span className="dots flex items-center gap-1.5" aria-label={`${attemptsLeft} attempts left`}>
-              {Array.from({ length: maxAttempts }).map((_, i) => (
-                <span
-                  key={i}
-                  className={`inline-block h-2.5 w-2.5 rounded-full ${i < used ? "bg-accent" : "bg-border"}`}
-                />
+          <section className="reads" aria-label="What they read in each attempt">
+            <div className="reads-header">
+              <span>They read every attempt for</span>
+              {lastPulls && <span>last attempt</span>}
+            </div>
+            <div className="reads-chips">
+              {LEVER_IDS.map((id) => {
+                const s = strength(lastPulls?.[id]);
+                return (
+                  <span key={id} className={`chip${s > 0 ? " on" : ""}${id === lastLever ? " lead" : ""}`}>
+                    {LEVER_LABELS[id]}
+                    {s > 0 && <span className="dots">{DOTS[s]}</span>}
+                  </span>
+                );
+              })}
+            </div>
+          </section>
+
+          <section className="exchange" aria-live="polite">
+            <div className="exchange-header">
+              <span>{scene.npcRole}</span>
+              <span>{attemptsLeft} of {maxAttempts} left</span>
+            </div>
+            <ol>
+              {messages.map((m, i) => (
+                <Turn key={i} msg={m} npcRole={scene.npcRole} />
               ))}
-              <span className="ml-2">{attemptsLeft} left</span>
-            </span>
-            <span className={text.length > maxChars ? "text-danger" : ""}>
-              {text.length} / {maxChars}
-            </span>
-          </div>
-          <textarea
-            ref={inputRef}
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            onKeyDown={onKey}
-            disabled={busy}
-            rows={3}
-            maxLength={maxChars}
-            autoFocus
-            placeholder="Say something..."
-            className="w-full resize-none rounded-xl border border-border bg-panel px-4 py-3 text-base text-fg placeholder:text-muted focus:border-accent focus:outline-none disabled:opacity-60"
-          />
-          {error && (
-            <div className="mt-2 flex items-center justify-between gap-3 text-sm text-danger">
-              <span>{error}</span>
-              <button type="button" onClick={() => void submit()} className="shrink-0 underline">
-                Retry
+              {busy && (
+                <li className="turn-npc">
+                  <div className="turn-meta"><span>{scene.npcRole}</span></div>
+                  <span className="thinking" aria-label="They are replying"><i /><i /><i /></span>
+                </li>
+              )}
+            </ol>
+          </section>
+
+          {status !== "playing" ? (
+            <div className={`result-banner${status === "won" ? " won" : ""}`}>
+              <h2>{status === "won" ? scene.winVerdict : scene.loseVerdict}</h2>
+              <p>{status === "won" ? "You got what you wanted." : "Not this time."}</p>
+              <div className="result-actions">
+                <button type="button" className="guess-button" onClick={() => reset(index)}>Play again</button>
+                <button type="button" className="secondary-button" onClick={() => reset(index + 1)}>Next scene</button>
+              </div>
+            </div>
+          ) : (
+            <form
+              ref={formRef}
+              className="guess-form"
+              onSubmit={(e) => {
+                e.preventDefault();
+                void submit();
+              }}
+            >
+              <div className="label-row">
+                <label htmlFor="attempt">Your move</label>
+                <span>
+                  Attempt {attemptNo} &middot; <span className={`counter${text.length > maxChars ? " over" : ""}`}>{text.length}/{maxChars}</span>
+                </span>
+              </div>
+              <textarea
+                id="attempt"
+                ref={inputRef}
+                className="guess-input"
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                onKeyDown={onKey}
+                disabled={busy}
+                rows={2}
+                maxLength={maxChars}
+                autoFocus
+                placeholder="What do you say?"
+              />
+              {error && (
+                <p className="error-message">
+                  <span>{error}</span>
+                  <button type="button" onClick={() => void submit()}>Retry</button>
+                </p>
+              )}
+              <button type="submit" className="guess-button" disabled={busy || !text.trim()}>
+                {busy ? "Saying it" : "Say it"}
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M5 12h14" /><path d="m12 5 7 7-7 7" />
+                </svg>
               </button>
+            </form>
+          )}
+
+          {debugOn && debug != null && (
+            <details className="debug">
+              <summary>debug</summary>
+              <pre>{JSON.stringify(debug, null, 2)}</pre>
+            </details>
+          )}
+
+          <footer className="game-footer">
+            <button type="button" className="help-button" onClick={() => setHelpOpen((v) => !v)}>How to play</button>
+            <span className="footer-divider" aria-hidden="true" />
+            <a href="https://typesafe.ai" target="_blank" rel="noreferrer">Powered by Jev</a>
+          </footer>
+          {helpOpen && (
+            <div className="help-copy">
+              <p>Someone stands between you and what you want. You have {maxAttempts} attempts to talk your way past them. Type what you would actually say.</p>
+              <p>Every attempt is read for the moves it makes: compassion, respect, self-interest, fairness, humour, pressure, bribe, guilt. Each person is open to some and allergic to others. Find what works on this one.</p>
+              <p>They reply in character. That reply, and the mood under it, is all the feedback you get. A great move can win on the spot. A bad one can bury you.</p>
             </div>
           )}
-          <button
-            type="submit"
-            disabled={busy || !text.trim()}
-            className="mt-2 w-full rounded-xl bg-accent px-4 py-3 text-base font-semibold text-accent-fg disabled:opacity-40 active:scale-[0.98]"
-          >
-            {busy ? "..." : "Say it"}
-          </button>
-        </form>
-      )}
+        </div>
+      </div>
     </main>
   );
 }
 
-const DOTS = ["", "\u25CF", "\u25CF\u25CF", "\u25CF\u25CF\u25CF"];
-
-function strength(v: number | undefined): number {
-  if (!v || v < 0.75) return 0;
-  if (v < 1.75) return 1;
-  if (v < 2.5) return 2;
-  return 3;
-}
-
-/** The moves the other person reads in every attempt. Lights up with what was read in the last one. */
-function Legend({ pulls }: { pulls: Pulls | null }) {
-  return (
-    <div className="mt-3 rounded-xl border border-border bg-panel/60 px-3 py-2.5">
-      <p className="text-xs uppercase tracking-widest text-muted">They read every attempt for</p>
-      <div className="mt-1.5 flex flex-wrap gap-1.5">
-        {LEVER_IDS.map((id) => {
-          const s = strength(pulls?.[id]);
-          const on = s > 0;
-          return (
-            <span
-              key={id}
-              className={`rounded-full border px-2.5 py-1 text-sm transition-colors ${
-                on ? "border-accent bg-accent/15 text-accent" : "border-border text-muted"
-              }`}
-            >
-              {LEVER_LABELS[id]}
-              {on && <span className="ml-1 text-xs">{DOTS[s]}</span>}
-            </span>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-function Bubble({ msg, npcRole }: { msg: Msg; npcRole: string }) {
+function Turn({ msg, npcRole }: { msg: Msg; npcRole: string }) {
   if (msg.speaker === "player") {
     const read = msg.pulls
       ? LEVER_IDS.filter((id) => strength(msg.pulls?.[id]) > 0).sort((a, b) => (msg.pulls?.[b] ?? 0) - (msg.pulls?.[a] ?? 0))
       : [];
     return (
-      <div className="max-w-[88%] self-end">
-        <div className="rounded-2xl rounded-br-sm bg-player px-4 py-3 text-fg">{msg.text}</div>
+      <li className="turn-you">
+        <div className="turn-meta"><span>You</span></div>
+        <p className="turn-text">{msg.text}</p>
         {msg.guarded ? (
-          <p className="mt-1 px-1 text-right text-sm text-muted">read as: talking to the game</p>
+          <p className="read-as">Read as: talking to the game</p>
         ) : read.length > 0 ? (
-          <p className="mt-1 px-1 text-right text-sm text-muted">
-            read as:{" "}
+          <p className="read-as">
+            Read as:{" "}
             {read.map((id, i) => (
-              <span key={id} className={id === msg.lever ? "text-accent" : ""}>
+              <span key={id} className={id === msg.lever ? "lead" : ""}>
                 {i > 0 && ", "}
                 {LEVER_LABELS[id]} {DOTS[strength(msg.pulls?.[id])]}
               </span>
             ))}
           </p>
         ) : msg.pulls ? (
-          <p className="mt-1 px-1 text-right text-sm text-muted">read as: nothing in particular</p>
+          <p className="read-as">Read as: nothing in particular</p>
         ) : null}
-      </div>
+      </li>
     );
   }
   if (msg.closing) {
-    return <p className="mt-1 px-1 italic text-muted">{msg.text}</p>;
+    return (
+      <li className="turn-closing">
+        <p className="turn-text">{msg.text}</p>
+      </li>
+    );
   }
   return (
-    <div className="max-w-[92%] self-start">
-      <div className="rounded-2xl rounded-bl-sm border border-border bg-panel px-4 py-3">
-        <span className="mb-0.5 block text-xs font-semibold uppercase tracking-wider text-muted">{npcRole}</span>
-        {msg.text}
+    <li className="turn-npc">
+      <div className="turn-meta">
+        <span>{npcRole}</span>
+        {msg.moodLabel && <span className="mood">{msg.moodLabel}</span>}
       </div>
-      {msg.moodLabel && <p className="mt-1 px-1 text-sm text-muted">{msg.moodLabel}</p>}
-    </div>
+      <p className="turn-text">{msg.text}</p>
+    </li>
   );
 }
