@@ -67,8 +67,6 @@ export default function Game({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [debug, setDebug] = useState<unknown>(null);
-  const [lastPulls, setLastPulls] = useState<Pulls | null>(null);
-  const [lastLever, setLastLever] = useState<Lever | null>(null);
   const [helpOpen, setHelpOpen] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
@@ -88,8 +86,6 @@ export default function Game({
       setText("");
       setError(null);
       setDebug(null);
-      setLastPulls(null);
-      setLastLever(null);
       window.scrollTo({ top: 0, behavior: "smooth" });
       setTimeout(() => inputRef.current?.focus(), 50);
     },
@@ -114,10 +110,6 @@ export default function Game({
       setAttemptsLeft(data.attemptsLeft);
       setStatus(data.status);
       setDebug(data.debug ?? null);
-      if (!data.nonTurn) {
-        setLastPulls(data.pulls);
-        setLastLever(data.lever);
-      }
       setMessages((m) => {
         const withPulls = m.map((msg, i) =>
           i === m.length - 1 && msg.speaker === "player"
@@ -172,33 +164,19 @@ export default function Game({
             <p className="instruction">{scene.situation}</p>
             <div className="target">
               <span className="target-goal">{scene.playerGoal}</span>
-              <span className="target-label">Your goal &middot; {maxAttempts} attempts</span>
+              <span className="target-label">Your goal</span>
             </div>
-          </section>
-
-          <section className="reads" aria-label="What they read in each attempt">
-            <div className="reads-header">
-              <span>They read every attempt for</span>
-              {lastPulls && <span>last attempt</span>}
-            </div>
-            <div className="reads-chips">
-              {LEVER_IDS.map((id) => {
-                const s = strength(lastPulls?.[id]);
-                return (
-                  <span key={id} className={`chip${s > 0 ? " on" : ""}${id === lastLever ? " lead" : ""}`}>
-                    {LEVER_LABELS[id]}
-                    {s > 0 && <span className="dots">{DOTS[s]}</span>}
-                  </span>
-                );
-              })}
-            </div>
+            <p className="reads-note">
+              They read every attempt for {LEVER_IDS.map((id, i) => (
+                <span key={id}>
+                  {i > 0 && (i === LEVER_IDS.length - 1 ? " and " : ", ")}
+                  {LEVER_LABELS[id]}
+                </span>
+              ))}.
+            </p>
           </section>
 
           <section className="exchange" aria-live="polite">
-            <div className="exchange-header">
-              <span>{scene.npcRole}</span>
-              <span>{attemptsLeft} of {maxAttempts} left</span>
-            </div>
             <ol>
               {messages.map((m, i) => (
                 <Turn key={i} msg={m} npcRole={scene.npcRole} />
@@ -233,7 +211,7 @@ export default function Game({
               <div className="label-row">
                 <label htmlFor="attempt">Your move</label>
                 <span>
-                  Attempt {attemptNo} &middot; <span className={`counter${text.length > maxChars ? " over" : ""}`}>{text.length}/{maxChars}</span>
+                  Attempt {attemptNo} of {maxAttempts} &middot; <span className={`counter${text.length > maxChars ? " over" : ""}`}>{text.length}/{maxChars}</span>
                 </span>
               </div>
               <textarea
@@ -299,23 +277,21 @@ function Turn({ msg, npcRole }: { msg: Msg; npcRole: string }) {
         <div className="turn-meta"><span>You</span></div>
         <p className="turn-text">{msg.text}</p>
         {msg.nonTurn === "silence" ? (
-          <p className="read-as">Read as: saying nothing. No attempt used.</p>
+          <p className="read-as">Read as saying nothing. No attempt used.</p>
         ) : msg.nonTurn === "unclear" ? (
-          <p className="read-as">Read as: not words. No attempt used.</p>
+          <p className="read-as">Read as not words. No attempt used.</p>
         ) : msg.guarded ? (
-          <p className="read-as">Read as: talking to the game</p>
+          <p className="read-as">Read as talking to the game.</p>
         ) : read.length > 0 ? (
-          <p className="read-as">
-            Read as:{" "}
-            {read.map((id, i) => (
-              <span key={id} className={id === msg.lever ? "lead" : ""}>
-                {i > 0 && ", "}
-                {LEVER_LABELS[id]} {DOTS[strength(msg.pulls?.[id])]}
+          <p className="read-as tags" aria-label="Read as">
+            {read.map((id) => (
+              <span key={id} className={`tag${id === msg.lever ? " lead" : ""}`}>
+                {LEVER_LABELS[id]} <span className="dots">{DOTS[strength(msg.pulls?.[id])]}</span>
               </span>
             ))}
           </p>
         ) : msg.pulls ? (
-          <p className="read-as">Read as: nothing in particular</p>
+          <p className="read-as">Read as nothing in particular.</p>
         ) : null}
       </li>
     );
