@@ -10,7 +10,9 @@ export const TUNING = {
   MAX_INPUT_CHARS: 400,
 
   /** Meter points for a full-strength pull on a lever the NPC is fully susceptible to (pull 1.0 x susceptibility 1.0). */
-  LEVER_SCALE: 60,
+  LEVER_SCALE: 90,
+  /** Pulls at or below this (0..3) count for nothing. Ordinary politeness or mild insistence should not move anyone. Effective pull rises linearly from here to 3. */
+  PULL_DEADZONE: 1.0,
   /** Positive pulls are multiplied by (floor + (1 - floor) * plausibility01). Implausible claims earn less. */
   PLAUSIBILITY_FLOOR: 0.4,
   /** Floor on a single turn's delta, so one bad attempt does not end the game on its own. */
@@ -30,7 +32,7 @@ export const TUNING = {
   /** Delta when a guard (meta instruction, contradiction) fires. */
   GUARD_PENALTY: -15,
   /** Noul probability at or above which the attempt counts as a stock line the NPC is sick of. */
-  STOCK_THRESHOLD: 0.7,
+  STOCK_THRESHOLD: 0.85,
   /** Subtracted when the attempt is a stock line delivered with nothing new. */
   STOCK_PENALTY: 15,
 

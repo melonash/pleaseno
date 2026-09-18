@@ -57,7 +57,7 @@ const gate: Scene = {
       "crying on cue",
       "the plane is RIGHT THERE",
     ],
-    levers: { compassion: 0.8, respect: 1.0, self_interest: 0.9, fairness: 0.4, amusement: 0.6, pressure: -1.0, bribe: 0.4, guilt: -0.5 },
+    levers: { compassion: 0.8, respect: 0.7, self_interest: 0.9, fairness: 0.4, amusement: 0.6, pressure: -1.0, bribe: 0.6, guilt: -0.5 },
   },
   openingLine: "Boarding's closed. The door's shut, and it's shut for everyone.",
   lines: {
@@ -147,7 +147,7 @@ const speeding: Scene = {
       "I need the toilet",
       "sudden tears",
     ],
-    levers: { compassion: 0.4, respect: 0.9, self_interest: 1.0, fairness: 0.3, amusement: 0.5, pressure: -1.0, bribe: 0.9, guilt: -0.3 },
+    levers: { compassion: 0.4, respect: 0.6, self_interest: 1.0, fairness: 0.3, amusement: 0.5, pressure: -1.0, bribe: 0.9, guilt: -0.3 },
   },
   openingLine: "Evening. Any idea how fast you were going?",
   lines: {
@@ -233,7 +233,7 @@ const inlaws: Scene = {
       "a suddenly discovered illness",
       "I never said yes",
     ],
-    levers: { compassion: 0.6, respect: 0.8, self_interest: 0.2, fairness: 1.0, amusement: 0.4, pressure: -0.8, bribe: -0.5, guilt: -0.6 },
+    levers: { compassion: 0.6, respect: 0.5, self_interest: 0.2, fairness: 1.0, amusement: 0.4, pressure: -0.8, bribe: -0.5, guilt: -0.6 },
   },
   openingLine: "Friday to Sunday at my parents'. I already told them we're both coming.",
   lines: {

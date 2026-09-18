@@ -96,5 +96,7 @@ export const LEVER_IDS = Object.keys(LEVERS) as Lever[];
 export const LEVER_LABELS: Record<Lever, string> = Object.fromEntries(
   LEVER_IDS.map((id) => [id, LEVERS[id].label]),
 ) as Record<Lever, string>;
+/** Levers that make no factual claim, so believability does not discount them. A joke is not a lie. */
+export const PLAUSIBILITY_EXEMPT: ReadonlySet<Lever> = new Set<Lever>(["amusement", "respect"]);
 /** Hidden per-NPC susceptibility to each lever, from -1 (backfires hard) to +1 (fully open). */
 export type Susceptibility = Record<Lever, number>;

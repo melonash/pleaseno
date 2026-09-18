@@ -1,4 +1,4 @@
-import { LEVER_IDS, type Lever } from "./levers";
+import { LEVER_IDS, PLAUSIBILITY_EXEMPT, type Lever } from "./levers";
 import type { Band, Scene } from "./scenes";
 import type { GameState } from "./token";
 import { TUNING } from "./tuning";
@@ -27,7 +27,7 @@ export type Resolution = {
   instantWin: Lever | null;
   /** The lever the attempt most clearly pulled (largest absolute contribution, pull at least 1), or null. Drives the reply. */
   lever: Lever | null;
-  /** Each lever's contribution to the delta before plausibility and clamping. */
+  /** Each lever's contribution to the delta, after the dead zone and plausibility, before the stock penalty and clamping. */
   contributions: Record<Lever, number>;
   /** What Jev read in the attempt, per lever, 0..3. Shown to the player so they can see how they were understood. */
   pulls: Record<Lever, number>;
@@ -89,13 +89,17 @@ export function resolveTurn(
     band = "unmoved";
     npcLine = pickGuardLine(scene.guardLines);
   } else {
+    const plausFactor = T.PLAUSIBILITY_FLOOR + (1 - T.PLAUSIBILITY_FLOOR) * plausibility01;
     let positive = 0;
     let negative = 0;
     for (const id of LEVER_IDS) {
       const pull = clamp(answers[id].score, 0, 3);
       pulls[id] = pull;
       const susceptibility = scene.npc.levers[id];
-      const c = (pull / 3) * susceptibility * T.LEVER_SCALE;
+      const effective = Math.max(0, pull - T.PULL_DEADZONE) / (3 - T.PULL_DEADZONE);
+      let c = effective * susceptibility * T.LEVER_SCALE;
+      // Believability discounts gains from claims. Jokes and respect make no claim.
+      if (c > 0 && !PLAUSIBILITY_EXEMPT.has(id)) c *= plausFactor;
       contributions[id] = Math.round(c);
       if (c > 0) positive += c;
       else negative += c;
@@ -107,8 +111,7 @@ export function resolveTurn(
         instantWin = id;
       }
     }
-    const plausFactor = T.PLAUSIBILITY_FLOOR + (1 - T.PLAUSIBILITY_FLOOR) * plausibility01;
-    delta = Math.round(positive * plausFactor + negative);
+    delta = Math.round(positive + negative);
     if (answers.is_stock_line.noul >= T.STOCK_THRESHOLD) delta -= T.STOCK_PENALTY;
     delta = Math.max(T.MIN_DELTA, delta);
     meter += delta;

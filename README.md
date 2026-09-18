@@ -41,6 +41,7 @@ Import the repo, add the two env vars under Settings → Environment Variables, 
 
 - Open the game with `?debug=1` to see the meter, delta, per-lever contributions and raw Jev answers under the chat.
 - `npm run probe` sends eight canned attempts per scene (a weak and an escalated compassion appeal, two good attempts, two stock excuses, one threat, one meta-instruction) through the real turn logic and prints a table of lever pulls and deltas. Run it before and after changing `lib/tuning.ts` or the Score level wording in `lib/questions.ts`.
+- `npm run tune` replays a saved battery of 38 attempts, each with an expected outcome tier, through the real resolution code. It makes no API calls, so you can change `lib/tuning.ts` or a character's lever table and see the effect instantly. `npm run battery -- <url>` re-captures Jev's answers when question wording changes.
 - `npm test` runs the resolution and token tests.
 
 ## Adding a scene

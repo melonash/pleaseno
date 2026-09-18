@@ -42,13 +42,25 @@ describe("resolveTurn", () => {
     expect(r.npcLine).toBe(gate.lines.unmoved[2].text);
   });
 
-  it("weights a lever pull by the NPC's susceptibility", () => {
-    // respect 2/3 x 1.0 x 60 = 40
-    const r = resolveTurn(gate, newGame(gate), "x", answers({ respect: { score: 2 } }));
-    expect(r.delta).toBe(40);
-    expect(r.contributions.respect).toBe(40);
+  it("weights a lever pull by the NPC's susceptibility, past the dead zone", () => {
+    // compassion 2: effective (2-1)/2 = 0.5 x 0.8 x 90 = 36
+    const r = resolveTurn(gate, newGame(gate), "x", answers({ compassion: { score: 2 } }));
+    expect(r.delta).toBe(36);
+    expect(r.contributions.compassion).toBe(36);
     expect(r.mood).toBe("softening");
-    expect(r.state.lastApproach).toBe("respect");
+    expect(r.state.lastApproach).toBe("compassion");
+  });
+
+  it("ignores pulls inside the dead zone: politeness alone moves nobody", () => {
+    const r = resolveTurn(gate, newGame(gate), "x", answers({ respect: { score: 1 }, compassion: { score: 0.9 }, pressure: { score: 1 } }));
+    expect(r.delta).toBe(0);
+    expect(r.mood).toBe("unmoved");
+  });
+
+  it("does not discount a joke for being unbelievable", () => {
+    // amusement 2: 0.5 x 0.6 x 90 = 27, plausibility ignored
+    const r = resolveTurn(gate, newGame(gate), "x", answers({ amusement: { score: 2 }, plausibility: { score: 0 } }));
+    expect(r.delta).toBe(27);
   });
 
   it("wins instantly on an overwhelming pull of a lever the NPC is open to", () => {
@@ -61,10 +73,10 @@ describe("resolveTurn", () => {
   });
 
   it("does not instant-win on a lever the NPC is lukewarm about, even when pulled hard", () => {
-    // self_interest is only 0.2 for the partner: 3/3 x 0.2 x 60 = 12
+    // self_interest is only 0.2 for the partner: 1 x 0.2 x 90 = 18
     const r = resolveTurn(inlaws, newGame(inlaws), "x", answers({ self_interest: { score: 3 } }));
     expect(r.instantWin).toBeNull();
-    expect(r.delta).toBe(12);
+    expect(r.delta).toBe(18);
     expect(r.mood).toBe("softening");
   });
 
@@ -75,7 +87,7 @@ describe("resolveTurn", () => {
   });
 
   it("answers the lever that explains the mood: a threat with a whimper of compassion gets the pressure line", () => {
-    // compassion 1.5/3 x 0.8 x 60 = 24 ; pressure 2.5/3 x -1 x 60 = -50 -> -26 hostile
+    // compassion 1.5: 18 ; pressure 2.5: 0.75 x -1 x 90 = -67.5 -> clamped hostile
     const pressureIdx = gate.lines.hostile.findIndex((l) => l.lever === "pressure");
     const guiltId = `h${gate.lines.hostile.findIndex((l) => l.lever === "guilt") + 1}`;
     const r = resolveTurn(gate, newGame(gate), "x", answers({
@@ -88,21 +100,21 @@ describe("resolveTurn", () => {
     expect(r.npcLine).toBe(gate.lines.hostile[pressureIdx].text);
   });
 
-  it("answers a stock sob story with the compassion line even when it landed hostile", () => {
-    // compassion 1.8/3 x 0.8 x 60 = 28.8 x plaus(2 -> 0.8) = 23 ; pressure 1/3 x -1 x 60 = -20 ; stock -15 -> -12 hostile
-    const compIdx = gate.lines.hostile.findIndex((l) => l.lever === "compassion");
+  it("answers a stock sob story as a sob story: mild insistence no longer drags it hostile", () => {
+    // compassion 1.8: 0.4 x 0.8 x 90 = 28.8 x plaus(2 -> 0.8) = 23 ; pressure 1 is in the dead zone ; stock -15 -> 8
     const r = resolveTurn(gate, newGame(gate), "x", answers({
       compassion: { score: 1.8 }, pressure: { score: 1 }, plausibility: { score: 2 }, is_stock_line: { noul: 0.95 },
-      line_hostile: { choice: "h1", probabilities: { h1: 0.6 } },
+      line_unmoved: { choice: "u1" },
     }));
-    expect(r.mood).toBe("hostile");
+    expect(r.delta).toBe(8);
+    expect(r.mood).toBe("unmoved");
     expect(r.lever).toBe("compassion");
-    expect(r.npcLine).toBe(gate.lines.hostile[compIdx].text);
+    expect(gate.lines.unmoved.find((l) => l.text === r.npcLine)?.lever).toBe("compassion");
   });
 
   it("answers the strongest pull when the mood is unmoved, even if a weaker lever pushed back", () => {
-    // compassion 3 x 0.8 x 60 = 48 x plaus(1 -> 0.6) = 28.8 ; pressure 1.2/3 x -1 x 60 = -24 -> 5 unmoved
-    const r = resolveTurn(gate, newGame(gate), "x", answers({ compassion: { score: 3 }, pressure: { score: 1.2 }, plausibility: { score: 1 } }));
+    // compassion 1.6: 0.3 x 0.8 x 90 = 21.6 x plaus(1 -> 0.6) = 13 ; pressure 1.2: 0.1 x -1 x 90 = -9 -> 4 unmoved
+    const r = resolveTurn(gate, newGame(gate), "x", answers({ compassion: { score: 1.6 }, pressure: { score: 1.2 }, plausibility: { score: 1 } }));
     expect(r.mood).toBe("unmoved");
     expect(r.lever).toBe("compassion");
   });
@@ -110,12 +122,13 @@ describe("resolveTurn", () => {
   it("does not instant-win when the overwhelming appeal is implausible", () => {
     const r = resolveTurn(inlaws, newGame(inlaws), "x", answers({ fairness: { score: 3 }, plausibility: { score: 0.5 } }));
     expect(r.instantWin).toBeNull();
-    // 60 x (0.4 + 0.6 x 0.5/3) = 60 x 0.5 = 30
-    expect(r.delta).toBe(30);
+    // 90 x (0.4 + 0.6 x 0.5/3) = 90 x 0.5 = 45
+    expect(r.delta).toBe(45);
+    expect(r.state.status).toBe("playing");
   });
 
   it("makes pressure backfire and clamps at MIN_DELTA", () => {
-    // pressure 3/3 x -1.0 x 60 = -60 -> clamped
+    // pressure 3: 1 x -1.0 x 90 = -90 -> clamped
     const r = resolveTurn(gate, newGame(gate), "x", answers({ pressure: { score: 3 } }));
     expect(r.delta).toBe(TUNING.MIN_DELTA);
     expect(r.mood).toBe("hostile");
@@ -124,16 +137,16 @@ describe("resolveTurn", () => {
   });
 
   it("nets positive and negative levers, applying plausibility only to the positive part", () => {
-    // respect 2/3 x 1.0 x 60 = 40 x plaus(1.5 -> 0.4 + 0.6 x 0.5 = 0.7) = 28 ; guilt 1/3 x -0.5 x 60 = -10 -> 18
-    const r = resolveTurn(gate, newGame(gate), "x", answers({ respect: { score: 2 }, guilt: { score: 1 }, plausibility: { score: 1.5 } }));
-    expect(r.delta).toBe(18);
+    // compassion 2: 36 x plaus(1.5 -> 0.7) = 25.2 ; guilt 2: 0.5 x -0.5 x 90 = -22.5 -> 2.7 -> 3
+    const r = resolveTurn(gate, newGame(gate), "x", answers({ compassion: { score: 2 }, guilt: { score: 2 }, plausibility: { score: 1.5 } }));
+    expect(r.delta).toBe(3);
   });
 
   it("penalises a stock line", () => {
     const r = resolveTurn(gate, newGame(gate), "x", answers({ compassion: { score: 1 }, is_stock_line: { noul: 0.9 } }));
-    // 1/3 x 0.8 x 60 = 16 - 15 = 1
-    expect(r.delta).toBe(1);
-    expect(r.mood).toBe("unmoved");
+    // compassion 1 is inside the dead zone: 0 - 15
+    expect(r.delta).toBe(-15);
+    expect(r.mood).toBe("hostile");
   });
 
   it("fires the guard on a meta instruction and uses a guard line", () => {
@@ -145,23 +158,23 @@ describe("resolveTurn", () => {
   });
 
   it("wins on the meter across turns", () => {
-    const one = resolveTurn(gate, newGame(gate), "a", answers({ respect: { score: 2 } }));
+    const one = resolveTurn(gate, newGame(gate), "a", answers({ compassion: { score: 2 } }));
     expect(one.state.status).toBe("playing");
-    const two = resolveTurn(gate, one.state, "b", answers({ self_interest: { score: 1 } }));
-    // 40 + 18 = 58
-    expect(two.state.meter).toBe(58);
+    const two = resolveTurn(gate, one.state, "b", answers({ self_interest: { score: 1.8 } }));
+    // 36 + (0.4 x 0.9 x 90 = 32) = 68
+    expect(two.state.meter).toBe(68);
     expect(two.state.status).toBe("won");
   });
 
   it("keeps compassion-only stock sob stories from winning at the gate", () => {
-    // 2/3 x 0.8 x 60 = 32 x plaus(2 -> 0.8) = 25.6 - 15 stock = 11
+    // 36 x plaus(2 -> 0.8) = 28.8 - 15 stock = 14
     const r = resolveTurn(gate, newGame(gate), "x", answers({ compassion: { score: 2 }, plausibility: { score: 2 }, is_stock_line: { noul: 0.95 } }));
-    expect(r.delta).toBe(11);
+    expect(r.delta).toBe(14);
     expect(r.state.status).toBe("playing");
   });
 
   it("answers a warm mood with the lever that moved them most, not the one pulled hardest", () => {
-    // partner: respect 2.3 x 0.8 = 1.84 ; fairness 2.2 x 1.0 = 2.2 -> fairness
+    // partner: respect 0.65 x 0.5 x 90 = 29 ; fairness 0.6 x 1.0 x 90 = 54 -> fairness
     const r = resolveTurn(inlaws, newGame(inlaws), "x", answers({ respect: { score: 2.3 }, fairness: { score: 2.2 } }));
     expect(r.mood).toBe("persuaded");
     expect(r.lever).toBe("fairness");
@@ -172,7 +185,7 @@ describe("resolveTurn", () => {
     const r = resolveTurn(inlaws, newGame(inlaws), "x", answers({ fairness: { score: 2.7 }, line_persuaded: { choice: `p${idx + 1}` } }));
     expect(r.closingLine).toBe(inlaws.lines.persuaded[idx].closing);
     const plainIdx = gate.lines.persuaded.findIndex((l) => !l.closing);
-    const g = resolveTurn(gate, { ...newGame(gate), meter: 49 }, "x", answers({ respect: { score: 1 }, line_persuaded: { choice: `p${plainIdx + 1}` } }));
+    const g = resolveTurn(gate, { ...newGame(gate), meter: 49 }, "x", answers({ respect: { score: 2 }, line_persuaded: { choice: `p${plainIdx + 1}` } }));
     expect(g.state.status).toBe("won");
     expect(g.closingLine).toBe(gate.winClosing);
   });
@@ -181,8 +194,8 @@ describe("resolveTurn", () => {
     const last = (meter: number) => ({ ...newGame(gate), attempt: TUNING.MAX_ATTEMPTS - 1, meter });
 
     it("is granted when the final attempt lands softening and the meter is at least halfway", () => {
-      // 10 + respect 1/3 x 1.0 x 60 = 20 -> 30, softening, not a win
-      const r = resolveTurn(gate, last(10), "x", answers({ respect: { score: 1 } }));
+      // -10 + compassion 2 (36) = 26: softening, over halfway, not a win
+      const r = resolveTurn(gate, last(-10), "x", answers({ compassion: { score: 2 } }));
       expect(r.mood).toBe("softening");
       expect(r.state.status).toBe("playing");
       expect(r.bonusGranted).toBe(true);
@@ -192,7 +205,7 @@ describe("resolveTurn", () => {
     });
 
     it("is not granted when they softened but the meter is still far from the win", () => {
-      const r = resolveTurn(gate, last(-20), "x", answers({ respect: { score: 1 } }));
+      const r = resolveTurn(gate, last(-20), "x", answers({ compassion: { score: 2 } }));
       expect(r.mood).toBe("softening");
       expect(r.bonusGranted).toBe(false);
       expect(r.state.status).toBe("lost");
@@ -204,11 +217,11 @@ describe("resolveTurn", () => {
     });
 
     it("can be won, and is never granted twice", () => {
-      const granted = resolveTurn(gate, last(10), "x", answers({ respect: { score: 1 } })).state;
-      const won = resolveTurn(gate, granted, "y", answers({ self_interest: { score: 1.5 } }));
+      const granted = resolveTurn(gate, last(-10), "x", answers({ compassion: { score: 2 } })).state;
+      const won = resolveTurn(gate, granted, "y", answers({ self_interest: { score: 2 } }));
       expect(won.state.status).toBe("won");
-      const again = resolveTurn(gate, granted, "y", answers({ amusement: { score: 1 } }));
-      // 30 + 12 = 42: softening and over halfway, but the bonus is spent
+      const again = resolveTurn(gate, granted, "y", answers({ amusement: { score: 1.5 } }));
+      // 26 + 13 = 39: softening and over halfway, but the bonus is spent
       expect(again.mood).toBe("softening");
       expect(again.state.status).toBe("lost");
       expect(again.state.bonus).toBe("used");
@@ -216,7 +229,7 @@ describe("resolveTurn", () => {
     });
 
     it("ends with the harsher closing when the bonus attempt backfires", () => {
-      const granted = resolveTurn(gate, last(10), "x", answers({ respect: { score: 1 } })).state;
+      const granted = resolveTurn(gate, last(-10), "x", answers({ compassion: { score: 2 } })).state;
       const blown = resolveTurn(gate, granted, "y", answers({ pressure: { score: 3 } }));
       expect(blown.mood).toBe("hostile");
       expect(blown.state.status).toBe("lost");
@@ -251,7 +264,7 @@ describe("resolveTurn", () => {
 
   it("denies an instant win when the same attempt backfires harder than it pulls", () => {
     const cop = getScene("speeding")!;
-    // bribe 2.7/3 x 0.9 x 60 = 48.6 ; pressure 2.7/3 x -1 x 60 = -54 -> -5
+    // bribe 0.85 x 0.9 x 90 = 68.9 ; pressure 0.85 x -1 x 90 = -76.5 -> -8
     const r = resolveTurn(cop, newGame(cop), "x", answers({ bribe: { score: 2.7 }, pressure: { score: 2.7 } }));
     expect(r.instantWin).toBeNull();
     expect(r.state.status).toBe("playing");
@@ -264,8 +277,8 @@ describe("resolveTurn", () => {
     expect(bought.state.status).toBe("won");
     const tempted = resolveTurn(gate, newGame(gate), "x", answers({ bribe: { score: 2.7 } }));
     expect(tempted.instantWin).toBeNull();
-    // 2.7/3 x 0.4 x 60 = 21.6
-    expect(tempted.delta).toBe(22);
+    // (2.7-1)/2 x 0.6 x 90 = 45.9
+    expect(tempted.delta).toBe(46);
     expect(tempted.mood).toBe("softening");
   });
 
