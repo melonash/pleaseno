@@ -65,6 +65,10 @@ const gate: Scene = {
       L("Not like that. Not waving it about with a queue behind you and a camera on that pillar. Put it away.", "bribe"),
       L("My fault? I didn't run the security line. I closed a door, on time, like I do forty times a day.", "guilt"),
       L("Hospital. Right. Third one today. I'm sorry, I genuinely am, and the door is still shut.", "compassion"),
+      L("Threats. At a gate. That's a security conversation now, not a door conversation, and I am very happy to make that call.", "pressure"),
+      L("Do whatever you're about to do. The door will still be shut when you're done.", "pressure"),
+      L("You can make this my fault if it helps. It won't open the door.", "guilt"),
+      L("I'm going to pretend I didn't hear that. For both our sakes."),
     ],
     unmoved: [
       L("Mm-hm. And the security line was insane. It's always insane.", "compassion"),
@@ -77,6 +81,11 @@ const gate: Scene = {
       L("Ha. Okay, that was almost funny. Door's still shut.", "amusement"),
       L("You'll 'owe me one'. What am I going to do with that, frame it?", "fairness"),
       L("For a door with a camera pointed at it? That's not a bribe, that's a dare. Also no.", "bribe"),
+      L("That's not a reason. That's a mood with a threat attached.", "pressure"),
+      L("I'm sorry. I mean that. It's still shut.", "compassion"),
+      L("Feeling bad isn't on the list of things that opens this door.", "guilt"),
+      L("That's a lot of words for 'let me on'."),
+      L("I don't know what to do with that sentence, so I'm going to do nothing."),
     ],
     softening: [
       L("...Okay. That's the first sentence today that didn't start with what I have to do.", "respect"),
@@ -89,6 +98,9 @@ const gate: Scene = {
       L("Don't make me laugh, I'm trying to be stern. ...Okay. Hold on.", "amusement"),
       L("You'd take the six a.m. tomorrow if this doesn't work? That's fair, actually. Stand there.", "fairness"),
       L("...Put that away. Not here. There's a camera on that pillar. ...What was the seat number?", "bribe"),
+      L("...Okay. That one wasn't on the bingo card. Give me a second.", "compassion"),
+      L("Ha. Okay. Hold on. I'm not smiling, I'm thinking.", "amusement"),
+      L("Fine. That's a fair way to put it. Stand there and let me look at something.", "respect"),
     ],
     persuaded: [
       L("Purser says yes. Run. Do not stop to thank me, run."),
@@ -145,6 +157,9 @@ const speeding: Scene = {
       L("You can film me. I'm going to keep writing, and you're going to have a very boring video.", "pressure"),
       L("Everybody else was going faster. And yet here we are, you and me, at the side of the road."),
       L("I'm ruining your day? I'm standing in traffic at the end of a ten-hour shift. Let's not compare days.", "guilt"),
+      L("Was that a threat? Hands where I can see them, and say it again. Slowly.", "pressure"),
+      L("I'm going to write that down exactly as you said it and let the judge enjoy it."),
+      L("I'm not the reason you were doing 52. Licence.", "guilt"),
     ],
     unmoved: [
       L("Didn't see the sign. It's a big sign. It's been there since before you had a licence."),
@@ -158,6 +173,10 @@ const speeding: Scene = {
       L("Grandma. Okay. Everybody's grandma is somewhere tonight. Licence and registration.", "compassion"),
       L("Please and thank you. Nice. Doesn't change the number.", "respect"),
       L("Twenty. You're going to insult me and then pay the ticket anyway. Try that again, or don't.", "bribe"),
+      L("Mm. That's not going to go the way you think it goes.", "pressure"),
+      L("Sorry to hear it. Licence and registration.", "compassion"),
+      L("Okay. I don't know what that was. Licence and registration."),
+      L("Nice of you to say. Doesn't change the number.", "respect"),
     ],
     softening: [
       L("Huh. Most people argue. Okay. Talk to me.", "respect"),
@@ -170,6 +189,8 @@ const speeding: Scene = {
       L("Ha! Alright. That's a new one. Don't push it.", "amusement"),
       L("You'd actually take the course voluntarily? Huh. Okay, talk.", "fairness"),
       L("...Keep your voice down. How much did you say?", "bribe"),
+      L("Appreciate you being straight with me. Go on.", "respect"),
+      L("Okay, that's a fair point. Keep talking.", "fairness"),
     ],
     persuaded: [
       L("Warning. Verbal. I don't want to see this car again tonight, and I mean that nicely."),
@@ -225,6 +246,9 @@ const inlaws: Scene = {
       L("That's a joke about my mother. Great. Fantastic timing.", "amusement"),
       L("Are you giving me an ultimatum? About my parents? Think very carefully about the next sentence.", "pressure"),
       L("You're going to buy me something so you don't have to see my mum. Do you hear yourself?", "bribe"),
+      L("You don't get to talk to me like that. Not about this.", "pressure"),
+      L("So I'm the bad guy for wanting to see my parents. Great.", "guilt"),
+      L("I don't even know what that means and I'm still annoyed."),
     ],
     unmoved: [
       L("You've got work. You've had work for three years. They're getting old, that's the thing that's on a timer."),
@@ -237,6 +261,10 @@ const inlaws: Scene = {
       L("Funny. Not funny enough for a whole weekend.", "amusement"),
       L("Well, thank you for being so polite about not coming.", "respect"),
       L("You're offering to buy me something instead of a weekend with my parents. ...It is a nice bag. Still no.", "bribe"),
+      L("Okay. Noted. Still going.", "pressure"),
+      L("I hear you. I'm still going, and I'd still like you there.", "compassion"),
+      L("...Was that supposed to help?"),
+      L("That's not really an answer, that's a noise."),
     ],
     softening: [
       L("...Okay. That's fair. I do know a whole weekend is a lot for you.", "respect"),
@@ -247,6 +275,8 @@ const inlaws: Scene = {
       L("I don't love it. But I hear you. What are you actually offering?"),
       L("...Oh. Okay. Why didn't you lead with that? Come here.", "compassion"),
       L("Stop making me laugh, I'm trying to be annoyed at you.", "amusement"),
+      L("Okay. Thank you for saying that properly.", "respect"),
+      L("I mean, that's something. Keep going.", "fairness"),
     ],
     persuaded: [
       L("Fine. Sunday lunch, here, you cook, you call them tonight. Not me. You.", "fairness"),

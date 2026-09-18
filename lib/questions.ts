@@ -85,7 +85,7 @@ export function buildState(
 
 function lineQuestion(scene: Scene, band: Band) {
   return choice(
-    `Assume that after \`current_attempt.text\` the NPC (\`scene.npc\`) feels ${BAND_DESCRIPTIONS[band]}. Which of these replies is the most fitting thing for them to say next, given exactly what the player said and \`conversation_so_far\`? Prefer a reply that responds to the specific content of the attempt over a generic one.`,
+    `Assume that after \`current_attempt.text\` the NPC (\`scene.npc\`) feels ${BAND_DESCRIPTIONS[band]}. Which of these replies is the most fitting thing for them to say next, given exactly what the player said and \`conversation_so_far\`? Rules: never pick a reply that refers to something the player did not actually say or do (filming, a relative, a specific sum, a specific excuse). A reply that responds to the specific content of the attempt beats a generic one, but a generic one beats a specific reply that does not match.`,
     lineCriteria(scene, band),
   );
 }
