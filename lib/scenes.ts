@@ -30,6 +30,8 @@ export type Scene = {
   unclearLines: string[];
   winClosing: string;
   loseClosing: string;
+  /** Used when the player had them wavering, got one last attempt, and made it worse. */
+  blownClosing: string;
   winVerdict: string;
   loseVerdict: string;
   moodLabels: Record<Band, string>;
@@ -119,6 +121,7 @@ const gate: Scene = {
   ],
   winClosing: "The door clicks. The jet bridge smells like carpet and jet fuel. You are on the plane.",
   loseClosing: "The door stays shut. Through the window, the jet bridge pulls back. The gate agent has already turned to the next passenger.",
+  blownClosing: "She had the phone in her hand. She puts it down. Through the window, the jet bridge pulls back.",
   winVerdict: "You talked your way onto the plane.",
   loseVerdict: "The plane left without you.",
   moodLabels: { hostile: "getting worse", unmoved: "not buying it", softening: "thinking about it", persuaded: "convinced" },
@@ -206,6 +209,7 @@ const speeding: Scene = {
   ],
   winClosing: "He taps the roof of the car twice and walks back to the cruiser. The lights go off. You pull away at exactly 30.",
   loseClosing: "He hands you the ticket through the window. \"Drive safe.\" It is not sarcasm. That somehow makes it worse.",
+  blownClosing: "He had stopped writing. He starts again, slower. The ticket comes through the window without a word.",
   winVerdict: "No fine. You drove away.",
   loseVerdict: "You got the ticket.",
   moodLabels: { hostile: "reaching for the pen", unmoved: "heard it before", softening: "listening", persuaded: "letting it go" },
@@ -291,6 +295,7 @@ const inlaws: Scene = {
   ],
   winClosing: "Your partner exhales and leans on the counter. The weekend is off.",
   loseClosing: "Your partner picks up their phone and types to their mother: \"We'll both be there Friday.\"",
+  blownClosing: "Your partner was almost there. They look at you for a second, then type to their mother: \"We'll both be there Friday.\"",
   winVerdict: "You got out of the weekend, and stayed in the relationship.",
   loseVerdict: "You're going. Bring a good pillow.",
   moodLabels: { hostile: "hurt", unmoved: "waiting", softening: "listening", persuaded: "okay with it" },

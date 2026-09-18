@@ -4,6 +4,8 @@ A daily persuasion game. One person stands between you and what you want: a gate
 
 Under the hood, [Jev](https://typesafe.ai) (TypeSafe's System One model) reads each attempt and scores how hard it pulls seven emotional levers: compassion, respect, self-interest, fairness, amusement, pressure and guilt. Each character has a hidden susceptibility to each lever, from -1 (backfires) to +1 (wide open), held in code. The meter moves by pull times susceptibility, scaled by how believable the attempt is. An overwhelming pull on a lever the character is open to wins on the spot. Pressure on a cop never works, no matter how hard you push. Every line the character says is authored; Jev only picks which one fits.
 
+You get three attempts. If the third leaves them wavering, close but not won, you get one last thing to say.
+
 ## Run it
 
 ```

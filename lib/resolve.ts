@@ -32,7 +32,16 @@ export type Resolution = {
   /** What Jev read in the attempt, per lever, 0..3. Shown to the player so they can see how they were understood. */
   pulls: Record<Lever, number>;
   closingLine?: string;
+  /** True when this turn granted the one bonus attempt. */
+  bonusGranted: boolean;
 };
+
+/** Attempts the player can still make, including a granted bonus. */
+export function attemptsLeft(state: GameState): number {
+  if (state.status !== "playing") return 0;
+  if (state.bonus === "granted") return 1;
+  return Math.max(0, TUNING.MAX_ATTEMPTS - state.attempt);
+}
 
 export function newGame(scene: Scene): GameState {
   return {
@@ -117,14 +126,24 @@ export function resolveTurn(
   }
 
   const attempt = prev.attempt + 1;
+  const wasBonus = prev.bonus === "granted";
   let status: GameState["status"] = "playing";
   let closingLine: string | undefined;
+  let bonus: GameState["bonus"] = wasBonus ? "used" : prev.bonus;
+  let bonusGranted = false;
   if (band === "persuaded") {
     status = "won";
     closingLine = lineClosing ?? scene.winClosing;
   } else if (attempt >= T.MAX_ATTEMPTS) {
-    status = "lost";
-    closingLine = scene.loseClosing;
+    const wavering = band === "softening" && meter >= T.WIN_THRESHOLD * T.BONUS_MIN_FRACTION;
+    if (!prev.bonus && wavering) {
+      // They found something that works, just not enough of it. One last thing.
+      bonus = "granted";
+      bonusGranted = true;
+    } else {
+      status = "lost";
+      closingLine = wasBonus && band === "hostile" ? scene.blownClosing : scene.loseClosing;
+    }
   }
 
   const state: GameState = {
@@ -134,9 +153,10 @@ export function resolveTurn(
     transcript: [...prev.transcript, { speaker: "player", text }, { speaker: "npc", text: npcLine }],
     lastApproach: dominant,
     status,
+    ...(bonus ? { bonus } : {}),
   };
 
-  return { state, npcLine, mood: band, delta, guarded, instantWin, lever: dominant, contributions, pulls, closingLine };
+  return { state, npcLine, mood: band, delta, guarded, instantWin, lever: dominant, contributions, pulls, closingLine, bonusGranted };
 }
 
 /**

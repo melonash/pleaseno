@@ -25,13 +25,16 @@ export async function playTurn(sceneId: string, prev: GameState | null, rawText:
     throw new TurnError(400, `Keep it under ${TUNING.MAX_INPUT_CHARS} characters. Real people don't listen to speeches.`);
   }
   const state = prev && prev.sceneId === sceneId && prev.status === "playing" ? prev : newGame(scene);
-  if (state.attempt >= TUNING.MAX_ATTEMPTS) throw new TurnError(409, "This game is over. Start a new one.");
+  if (state.attempt >= TUNING.MAX_ATTEMPTS && state.bonus !== "granted") {
+    throw new TurnError(409, "This game is over. Start a new one.");
+  }
 
   if (classifyInput(text) === "silence") {
     return { kind: "silence", npcLine: pickRandom(scene.silenceLines), state, scene };
   }
 
-  const jevState = buildState(scene, state.transcript, state.attempt + 1, TUNING.MAX_ATTEMPTS, text);
+  const totalAttempts = TUNING.MAX_ATTEMPTS + (state.bonus === "granted" ? 1 : 0);
+  const jevState = buildState(scene, state.transcript, state.attempt + 1, totalAttempts, text);
   const questions = buildQuestions(scene);
   const { answers } = await jev().systemOne({ state: jevState, questions }, { timeout: 20_000 });
 
@@ -51,6 +54,7 @@ export async function playTurn(sceneId: string, prev: GameState | null, rawText:
       transcript: state.transcript,
       playerText: text,
       authoredLine: resolution.npcLine,
+      wavering: resolution.bonusGranted,
     });
     if (gen) {
       generated = true;

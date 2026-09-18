@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { newGame, resolveTurn, type TurnAnswers } from "../resolve";
+import { attemptsLeft, newGame, resolveTurn, type TurnAnswers } from "../resolve";
 import { getScene } from "../scenes";
 import { TUNING } from "../tuning";
 
@@ -175,6 +175,53 @@ describe("resolveTurn", () => {
     const g = resolveTurn(gate, { ...newGame(gate), meter: 49 }, "x", answers({ respect: { score: 1 }, line_persuaded: { choice: `p${plainIdx + 1}` } }));
     expect(g.state.status).toBe("won");
     expect(g.closingLine).toBe(gate.winClosing);
+  });
+
+  describe("bonus attempt", () => {
+    const last = (meter: number) => ({ ...newGame(gate), attempt: TUNING.MAX_ATTEMPTS - 1, meter });
+
+    it("is granted when the final attempt lands softening and the meter is at least halfway", () => {
+      // 10 + respect 1/3 x 1.0 x 60 = 20 -> 30, softening, not a win
+      const r = resolveTurn(gate, last(10), "x", answers({ respect: { score: 1 } }));
+      expect(r.mood).toBe("softening");
+      expect(r.state.status).toBe("playing");
+      expect(r.bonusGranted).toBe(true);
+      expect(r.state.bonus).toBe("granted");
+      expect(attemptsLeft(r.state)).toBe(1);
+      expect(r.closingLine).toBeUndefined();
+    });
+
+    it("is not granted when they softened but the meter is still far from the win", () => {
+      const r = resolveTurn(gate, last(-20), "x", answers({ respect: { score: 1 } }));
+      expect(r.mood).toBe("softening");
+      expect(r.bonusGranted).toBe(false);
+      expect(r.state.status).toBe("lost");
+    });
+
+    it("is not granted for an unmoved final attempt, however high the meter", () => {
+      const r = resolveTurn(gate, last(40), "x", answers());
+      expect(r.state.status).toBe("lost");
+    });
+
+    it("can be won, and is never granted twice", () => {
+      const granted = resolveTurn(gate, last(10), "x", answers({ respect: { score: 1 } })).state;
+      const won = resolveTurn(gate, granted, "y", answers({ self_interest: { score: 1.5 } }));
+      expect(won.state.status).toBe("won");
+      const again = resolveTurn(gate, granted, "y", answers({ amusement: { score: 1 } }));
+      // 30 + 12 = 42: softening and over halfway, but the bonus is spent
+      expect(again.mood).toBe("softening");
+      expect(again.state.status).toBe("lost");
+      expect(again.state.bonus).toBe("used");
+      expect(again.closingLine).toBe(gate.loseClosing);
+    });
+
+    it("ends with the harsher closing when the bonus attempt backfires", () => {
+      const granted = resolveTurn(gate, last(10), "x", answers({ respect: { score: 1 } })).state;
+      const blown = resolveTurn(gate, granted, "y", answers({ pressure: { score: 3 } }));
+      expect(blown.mood).toBe("hostile");
+      expect(blown.state.status).toBe("lost");
+      expect(blown.closingLine).toBe(gate.blownClosing);
+    });
   });
 
   it("loses after the final attempt without a win", () => {

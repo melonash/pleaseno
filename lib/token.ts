@@ -10,6 +10,8 @@ export type GameState = {
   transcript: { speaker: Speaker; text: string }[];
   lastApproach: string | null;
   status: Status;
+  /** "granted": the player is wavering-close and gets one last attempt. "used": that attempt has been played. */
+  bonus?: "granted" | "used";
 };
 
 function secret(): string {

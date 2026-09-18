@@ -34,6 +34,8 @@ export type GenerateInput = {
   playerText: string;
   /** The authored pick, shown to the model as the reference for tone and length. */
   authoredLine: string;
+  /** True when the character is close to giving in and the player gets one last thing to say. */
+  wavering?: boolean;
 };
 
 function systemPrompt(scene: Scene, band: Band): string {
@@ -69,13 +71,15 @@ export type Generated = { line: string; closing?: string };
 
 export async function generateReply(input: GenerateInput): Promise<Generated | null> {
   if (!generationEnabled()) return null;
-  const { scene, band, lever, transcript, playerText, authoredLine } = input;
+  const { scene, band, lever, transcript, playerText, authoredLine, wavering } = input;
 
   const history: Anthropic.MessageParam[] = transcript.map((t) => ({
     role: t.speaker === "npc" ? "assistant" : "user",
     content: t.text,
   }));
-  const leverNote = lever ? ` The attempt mainly appeals to ${LEVERS[lever].label}.` : "";
+  const leverNote =
+    (lever ? ` The attempt mainly appeals to ${LEVERS[lever].label}.` : "") +
+    (wavering ? " You are close to giving in but not there. Leave the door open for them to say one more thing." : "");
   const userTurn = `${playerText}\n\n[Director's note, not spoken by the player: reply as the ${scene.npc.role.toLowerCase()}, feeling ${BAND_DESCRIPTIONS[band]}.${leverNote} An acceptable authored reply would be: "${authoredLine}". Write a better one that fits what the player actually said.]`;
 
   try {

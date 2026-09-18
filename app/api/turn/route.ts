@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { decodeState, encodeState } from "@/lib/token";
 import { playTurn, TurnError } from "@/lib/turn";
-import { TUNING } from "@/lib/tuning";
+import { attemptsLeft } from "@/lib/resolve";
 
 export const runtime = "nodejs";
 
@@ -24,7 +24,8 @@ export async function POST(req: Request) {
         npcLine: r.npcLine,
         mood: "waiting",
         moodLabel: "waiting",
-        attemptsLeft: TUNING.MAX_ATTEMPTS - r.state.attempt,
+        attemptsLeft: attemptsLeft(r.state),
+        bonus: r.state.bonus === "granted",
         status: r.state.status,
         closingLine: null,
         pulls: {},
@@ -38,7 +39,8 @@ export async function POST(req: Request) {
       npcLine: r.npcLine,
       mood: r.mood,
       moodLabel: r.scene.moodLabels[r.mood],
-      attemptsLeft: TUNING.MAX_ATTEMPTS - r.state.attempt,
+      attemptsLeft: attemptsLeft(r.state),
+      bonus: r.state.bonus === "granted",
       status: r.state.status,
       closingLine: r.closingLine ?? null,
       pulls: Object.fromEntries(Object.entries(r.pulls).map(([k, v]) => [k, Math.round(v * 10) / 10])),

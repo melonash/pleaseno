@@ -136,6 +136,7 @@ button:focus-visible, a:focus-visible, textarea:focus-visible { outline: 2px sol
 .guess-button svg { width: 18px; height: 18px; }
 .error-message { color: var(--destructive); margin: 13px 0 0; font-size: .875rem; line-height: 1.55; display: flex; justify-content: space-between; gap: 12px; }
 .error-message button { background: none; border: 0; color: inherit; text-decoration: underline; cursor: pointer; padding: 0; }
+.label-row .bonus { color: var(--terracotta); }
 .counter { font-variant-numeric: tabular-nums; }
 .counter.over { color: var(--destructive); }
 

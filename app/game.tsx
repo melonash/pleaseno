@@ -23,6 +23,7 @@ type TurnResponse = {
   mood: string;
   moodLabel: string;
   attemptsLeft: number;
+  bonus?: boolean;
   status: Status;
   closingLine: string | null;
   pulls: Pulls;
@@ -68,6 +69,7 @@ export default function Game({
   const [error, setError] = useState<string | null>(null);
   const [debug, setDebug] = useState<unknown>(null);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [bonus, setBonus] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -83,6 +85,7 @@ export default function Game({
       setToken(null);
       setAttemptsLeft(maxAttempts);
       setStatus("playing");
+      setBonus(false);
       setText("");
       setError(null);
       setDebug(null);
@@ -108,6 +111,7 @@ export default function Game({
       if (!res.ok) throw new Error(data.error || "Something went wrong.");
       setToken(data.stateToken);
       setAttemptsLeft(data.attemptsLeft);
+      setBonus(Boolean(data.bonus));
       setStatus(data.status);
       setDebug(data.debug ?? null);
       setMessages((m) => {
@@ -209,9 +213,9 @@ export default function Game({
               }}
             >
               <div className="label-row">
-                <label htmlFor="attempt">Your move</label>
+                <label htmlFor="attempt">{bonus ? "They're wavering" : "Your move"}</label>
                 <span>
-                  Attempt {attemptNo} of {maxAttempts} &middot; <span className={`counter${text.length > maxChars ? " over" : ""}`}>{text.length}/{maxChars}</span>
+                  {bonus ? <span className="bonus">One last thing</span> : <>Attempt {attemptNo} of {maxAttempts}</>} &middot; <span className={`counter${text.length > maxChars ? " over" : ""}`}>{text.length}/{maxChars}</span>
                 </span>
               </div>
               <textarea
@@ -225,7 +229,7 @@ export default function Game({
                 rows={2}
                 maxLength={maxChars}
                 autoFocus
-                placeholder="What do you say?"
+                placeholder={bonus ? "Say the thing that tips it." : "What do you say?"}
               />
               {error && (
                 <p className="error-message">
@@ -259,6 +263,7 @@ export default function Game({
               <p>Someone stands between you and what you want. You have {maxAttempts} attempts to talk your way past them. Type what you would actually say.</p>
               <p>Every attempt is read for the moves it makes: compassion, respect, self-interest, fairness, humour, pressure, bribe, guilt. Each person is open to some and allergic to others. Find what works on this one.</p>
               <p>They reply in character. That reply, and the mood under it, is all the feedback you get. A great move can win on the spot. A bad one can bury you.</p>
+              <p>If your last attempt leaves them wavering, you get one more thing to say. Make it count.</p>
             </div>
           )}
         </div>

@@ -4,6 +4,8 @@ export const TUNING = {
   WIN_THRESHOLD: 50,
   /** Attempts per game. */
   MAX_ATTEMPTS: 3,
+  /** One bonus attempt is granted if the final attempt lands softening and the meter is at least this fraction of the way to the win. */
+  BONUS_MIN_FRACTION: 0.5,
   /** Max player input length, enforced server-side. */
   MAX_INPUT_CHARS: 400,
 
