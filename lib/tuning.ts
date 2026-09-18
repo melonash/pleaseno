@@ -21,6 +21,8 @@ export const TUNING = {
   /** ...and at least this plausible (0..3 scale), wins on the spot regardless of the meter. */
   INSTANT_WIN_PLAUSIBILITY: 1.5,
 
+  /** Noul probability at or above which the text counts as unintelligible (no attempt consumed). */
+  UNCLEAR_THRESHOLD: 0.7,
   /** Noul probability at or above which a guard counts as true. */
   NOUL_THRESHOLD: 0.6,
   /** Delta when a guard (meta instruction, contradiction) fires. */

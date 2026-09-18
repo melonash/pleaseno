@@ -19,6 +19,21 @@ export async function POST(req: Request) {
 
   try {
     const r = await playTurn(sceneId, prev, text);
+    if ("kind" in r) {
+      return NextResponse.json({
+        npcLine: r.npcLine,
+        mood: "waiting",
+        moodLabel: "waiting",
+        attemptsLeft: TUNING.MAX_ATTEMPTS - r.state.attempt,
+        status: r.state.status,
+        closingLine: null,
+        pulls: {},
+        lever: null,
+        guarded: false,
+        nonTurn: r.kind,
+        stateToken: encodeState(r.state),
+      });
+    }
     const res: Record<string, unknown> = {
       npcLine: r.npcLine,
       mood: r.mood,

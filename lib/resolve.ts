@@ -8,6 +8,7 @@ import { pickLine } from "./questions";
 export type TurnAnswers = Record<Lever, { score: number }> & {
   plausibility: { score: number };
   is_stock_line: { noul: number };
+  is_unintelligible?: { noul: number };
   is_meta_instruction: { noul: number };
   contradicts_situation: { noul: number };
   line_hostile: LineAnswer;

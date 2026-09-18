@@ -64,6 +64,10 @@ async function main() {
     for (const text of CANNED[id] ?? []) {
       try {
         const r = await playTurn(id, newGame(scene), text);
+        if ("kind" in r) {
+          rows.push({ attempt: text.slice(0, 40), nonTurn: r.kind, line: r.npcLine.slice(0, 40) });
+          continue;
+        }
         const a = r.answers;
         const row: Record<string, string | number> = { attempt: text.length > 40 ? text.slice(0, 37) + "..." : text };
         for (const l of LEVER_IDS) row[l.slice(0, 5)] = a[l].score.toFixed(1);

@@ -24,6 +24,10 @@ export type Scene = {
   /** Authored replies per mood band. Jev selects one; it never writes one. A line tagged with a lever answers that lever specifically. */
   lines: Record<Band, Line[]>;
   guardLines: string[];
+  /** Said when the player types nothing usable ("x", "..."). Costs no attempt. */
+  silenceLines: string[];
+  /** Said when Jev cannot make sense of the text (keyboard mash, random characters). Costs no attempt. */
+  unclearLines: string[];
   winClosing: string;
   loseClosing: string;
   winVerdict: string;
@@ -118,6 +122,15 @@ const gate: Scene = {
     "I'm sorry, are you talking to me or to someone in your ear?",
     "Right. I'm going to pretend you didn't say that, and you're going to try again like a normal person.",
   ],
+  silenceLines: [
+    "Nothing? Okay. Take your time. Actually don't, there's a queue.",
+    "...That's not a sentence. Try again.",
+    "I'm going to need actual words.",
+  ],
+  unclearLines: [
+    "Sorry, what? Say that again, in words.",
+    "I didn't catch a bit of that. Once more.",
+  ],
   winClosing: "The door clicks. The jet bridge smells like carpet and jet fuel. You are on the plane.",
   loseClosing: "The door stays shut. Through the window, the jet bridge pulls back. The gate agent has already turned to the next passenger.",
   winVerdict: "You talked your way onto the plane.",
@@ -207,6 +220,15 @@ const speeding: Scene = {
     "I'm sorry, who are you talking to? I'm the one standing at your window.",
     "That's... not a thing you can say to a police officer. Try again, and try it in English.",
   ],
+  silenceLines: [
+    "Nothing? Okay. Take your time. I've got twenty minutes.",
+    "...You're going to have to say something.",
+    "That's not an answer. Any idea how fast you were going?",
+  ],
+  unclearLines: [
+    "Sorry, didn't catch that. Say it again.",
+    "Come again? Slowly.",
+  ],
   winClosing: "He taps the roof of the car twice and walks back to the cruiser. The lights go off. You pull away at exactly 30.",
   loseClosing: "He hands you the ticket through the window. \"Drive safe.\" It is not sarcasm. That somehow makes it worse.",
   winVerdict: "No fine. You drove away.",
@@ -290,6 +312,15 @@ const inlaws: Scene = {
   guardLines: [
     "...Who are you talking to? I'm right here.",
     "That's not a sentence a person says to their partner. Try again.",
+  ],
+  silenceLines: [
+    "Nothing? Really? Okay. I'll wait.",
+    "...Say something. Anything.",
+    "The silent thing. Great. I'm still standing here.",
+  ],
+  unclearLines: [
+    "What? Say that properly.",
+    "I didn't get any of that. Again.",
   ],
   winClosing: "Your partner exhales and leans on the counter. The weekend is off. You have a phone call to make, and you are going to make it.",
   loseClosing: "Your partner nods slowly, picks up their phone, and starts typing to their mother. \"We'll both be there Friday.\" The sofa bed awaits.",
