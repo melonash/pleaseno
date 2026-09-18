@@ -16,7 +16,12 @@ function pickRandom<T>(items: T[]): T {
 }
 
 /** Runs one full turn: validate, ask Jev once, resolve in code. Shared by the API route and the probe script. */
-export async function playTurn(sceneId: string, prev: GameState | null, rawText: string): Promise<TurnResult | NonTurn> {
+export async function playTurn(
+  sceneId: string,
+  prev: GameState | null,
+  rawText: string,
+  opts: { generate?: boolean } = {},
+): Promise<TurnResult | NonTurn> {
   const scene = getScene(sceneId);
   if (!scene) throw new TurnError(404, "Unknown scene.");
   const text = rawText.trim();
@@ -46,7 +51,7 @@ export async function playTurn(sceneId: string, prev: GameState | null, rawText:
 
   // Optional context-aware line. The outcome above is final; only the wording may change.
   let generated = false;
-  if (!resolution.guarded) {
+  if (!resolution.guarded && opts.generate !== false) {
     const gen = await generateReply({
       scene,
       band: resolution.mood,

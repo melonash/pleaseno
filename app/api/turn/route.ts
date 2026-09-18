@@ -15,10 +15,13 @@ export async function POST(req: Request) {
   const sceneId = typeof body.sceneId === "string" ? body.sceneId : "";
   const text = typeof body.text === "string" ? body.text : "";
   const prev = typeof body.stateToken === "string" ? decodeState(body.stateToken) : null;
-  const debug = new URL(req.url).searchParams.get("debug") === "1";
+  const params = new URL(req.url).searchParams;
+  const debug = params.get("debug") === "1";
+  // Tuning runs pass nogen=1 to skip the optional generated reply and its cost.
+  const generate = params.get("nogen") !== "1";
 
   try {
-    const r = await playTurn(sceneId, prev, text);
+    const r = await playTurn(sceneId, prev, text, { generate });
     if ("kind" in r) {
       return NextResponse.json({
         npcLine: r.npcLine,
