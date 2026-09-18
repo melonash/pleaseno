@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { PublicScene } from "@/lib/scenes";
 import { LEVER_IDS, LEVER_LABELS, type Lever } from "@/lib/levers";
@@ -146,9 +147,9 @@ export default function Game({
     <main className="game-page">
       <div className="game-shell">
         <header className="game-header">
-          <a className="wordmark" href="/" aria-label="Talk Your Way Out home">
+          <Link className="wordmark" href="/" aria-label="Talk Your Way Out home">
             talk your way out<span>.</span>
-          </a>
+          </Link>
           <button type="button" className="ghost-button" onClick={() => reset(index + 1)}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="M16 3h5v5" /><path d="M4 20 21 3" /><path d="M21 16v5h-5" /><path d="M15 15l6 6" /><path d="M4 4l5 5" />
