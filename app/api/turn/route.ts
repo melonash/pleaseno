@@ -26,6 +26,9 @@ export async function POST(req: Request) {
       attemptsLeft: TUNING.MAX_ATTEMPTS - r.state.attempt,
       status: r.state.status,
       closingLine: r.closingLine ?? null,
+      pulls: Object.fromEntries(Object.entries(r.pulls).map(([k, v]) => [k, Math.round(v * 10) / 10])),
+      lever: r.lever,
+      guarded: r.guarded,
       stateToken: encodeState(r.state),
     };
     if (debug) {

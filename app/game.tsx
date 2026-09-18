@@ -2,8 +2,10 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { PublicScene } from "@/lib/scenes";
+import { LEVER_IDS, LEVER_LABELS, type Lever } from "@/lib/levers";
 
-type Msg = { speaker: "npc" | "player"; text: string; moodLabel?: string; closing?: boolean };
+type Pulls = Partial<Record<Lever, number>>;
+type Msg = { speaker: "npc" | "player"; text: string; moodLabel?: string; closing?: boolean; pulls?: Pulls; lever?: Lever | null; guarded?: boolean };
 type Status = "playing" | "won" | "lost";
 
 type TurnResponse = {
@@ -13,6 +15,9 @@ type TurnResponse = {
   attemptsLeft: number;
   status: Status;
   closingLine: string | null;
+  pulls: Pulls;
+  lever: Lever | null;
+  guarded: boolean;
   stateToken: string;
   debug?: unknown;
   error?: string;
@@ -42,6 +47,7 @@ export default function Game({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [debug, setDebug] = useState<unknown>(null);
+  const [lastPulls, setLastPulls] = useState<Pulls | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -60,6 +66,7 @@ export default function Game({
       setText("");
       setError(null);
       setDebug(null);
+      setLastPulls(null);
       setTimeout(() => inputRef.current?.focus(), 50);
     },
     [scenes, maxAttempts],
@@ -83,8 +90,12 @@ export default function Game({
       setAttemptsLeft(data.attemptsLeft);
       setStatus(data.status);
       setDebug(data.debug ?? null);
+      setLastPulls(data.pulls);
       setMessages((m) => {
-        const next: Msg[] = [...m, { speaker: "npc", text: data.npcLine, moodLabel: data.moodLabel }];
+        const withPulls = m.map((msg, i) =>
+          i === m.length - 1 && msg.speaker === "player" ? { ...msg, pulls: data.pulls, lever: data.lever, guarded: data.guarded } : msg,
+        );
+        const next: Msg[] = [...withPulls, { speaker: "npc", text: data.npcLine, moodLabel: data.moodLabel }];
         if (data.closingLine) next.push({ speaker: "npc", text: data.closingLine, closing: true });
         return next;
       });
@@ -123,6 +134,8 @@ export default function Game({
         <p className="mt-3 font-semibold text-accent">{scene.playerGoal}</p>
         <p className="mt-3 text-sm text-muted">You get {maxAttempts} attempts.</p>
       </section>
+
+      <Legend pulls={lastPulls} />
 
       <section className="mt-4 flex flex-1 flex-col gap-3" aria-live="polite">
         {messages.map((m, i) => (
@@ -223,11 +236,64 @@ export default function Game({
   );
 }
 
+const DOTS = ["", "\u25CF", "\u25CF\u25CF", "\u25CF\u25CF\u25CF"];
+
+function strength(v: number | undefined): number {
+  if (!v || v < 0.75) return 0;
+  if (v < 1.75) return 1;
+  if (v < 2.5) return 2;
+  return 3;
+}
+
+/** The moves the other person reads in every attempt. Lights up with what was read in the last one. */
+function Legend({ pulls }: { pulls: Pulls | null }) {
+  return (
+    <div className="mt-3 rounded-xl border border-border bg-panel/60 px-3 py-2.5">
+      <p className="text-xs uppercase tracking-widest text-muted">They read every attempt for</p>
+      <div className="mt-1.5 flex flex-wrap gap-1.5">
+        {LEVER_IDS.map((id) => {
+          const s = strength(pulls?.[id]);
+          const on = s > 0;
+          return (
+            <span
+              key={id}
+              className={`rounded-full border px-2.5 py-1 text-sm transition-colors ${
+                on ? "border-accent bg-accent/15 text-accent" : "border-border text-muted"
+              }`}
+            >
+              {LEVER_LABELS[id]}
+              {on && <span className="ml-1 text-xs">{DOTS[s]}</span>}
+            </span>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function Bubble({ msg, npcRole }: { msg: Msg; npcRole: string }) {
   if (msg.speaker === "player") {
+    const read = msg.pulls
+      ? LEVER_IDS.filter((id) => strength(msg.pulls?.[id]) > 0).sort((a, b) => (msg.pulls?.[b] ?? 0) - (msg.pulls?.[a] ?? 0))
+      : [];
     return (
-      <div className="max-w-[88%] self-end rounded-2xl rounded-br-sm bg-player px-4 py-3 text-fg">
-        {msg.text}
+      <div className="max-w-[88%] self-end">
+        <div className="rounded-2xl rounded-br-sm bg-player px-4 py-3 text-fg">{msg.text}</div>
+        {msg.guarded ? (
+          <p className="mt-1 px-1 text-right text-sm text-muted">read as: talking to the game</p>
+        ) : read.length > 0 ? (
+          <p className="mt-1 px-1 text-right text-sm text-muted">
+            read as:{" "}
+            {read.map((id, i) => (
+              <span key={id} className={id === msg.lever ? "text-accent" : ""}>
+                {i > 0 && ", "}
+                {LEVER_LABELS[id]} {DOTS[strength(msg.pulls?.[id])]}
+              </span>
+            ))}
+          </p>
+        ) : msg.pulls ? (
+          <p className="mt-1 px-1 text-right text-sm text-muted">read as: nothing in particular</p>
+        ) : null}
       </div>
     );
   }

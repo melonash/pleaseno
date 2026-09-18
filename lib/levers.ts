@@ -45,7 +45,7 @@ export const LEVERS = {
     ],
   },
   amusement: {
-    label: "amusement",
+    label: "humour",
     instructions:
       "How strongly does `current_attempt.text` charm or disarm: humour, self-deprecation, wit, refreshing honesty, or an unexpected angle that would make the NPC smile despite themselves?",
     levels: [
@@ -92,5 +92,9 @@ export const LEVERS = {
 
 export type Lever = keyof typeof LEVERS;
 export const LEVER_IDS = Object.keys(LEVERS) as Lever[];
+/** Player-facing names, in display order. Safe to ship to the browser. */
+export const LEVER_LABELS: Record<Lever, string> = Object.fromEntries(
+  LEVER_IDS.map((id) => [id, LEVERS[id].label]),
+) as Record<Lever, string>;
 /** Hidden per-NPC susceptibility to each lever, from -1 (backfires hard) to +1 (fully open). */
 export type Susceptibility = Record<Lever, number>;

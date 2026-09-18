@@ -28,6 +28,8 @@ export type Resolution = {
   lever: Lever | null;
   /** Each lever's contribution to the delta before plausibility and clamping. */
   contributions: Record<Lever, number>;
+  /** What Jev read in the attempt, per lever, 0..3. Shown to the player so they can see how they were understood. */
+  pulls: Record<Lever, number>;
   closingLine?: string;
 };
 
@@ -67,7 +69,10 @@ export function resolveTurn(
   const pulls = {} as Record<Lever, number>;
 
   if (guarded) {
-    for (const id of LEVER_IDS) contributions[id] = 0;
+    for (const id of LEVER_IDS) {
+      contributions[id] = 0;
+      pulls[id] = 0;
+    }
     delta = T.GUARD_PENALTY;
     meter += delta;
     band = "unmoved";
@@ -125,7 +130,7 @@ export function resolveTurn(
     status,
   };
 
-  return { state, npcLine, mood: band, delta, guarded, instantWin, lever: dominant, contributions, closingLine };
+  return { state, npcLine, mood: band, delta, guarded, instantWin, lever: dominant, contributions, pulls, closingLine };
 }
 
 /**

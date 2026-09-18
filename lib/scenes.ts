@@ -35,7 +35,7 @@ const gate: Scene = {
   id: "gate",
   title: "The Closed Gate",
   situation:
-    "You ran through the terminal, and you can see the plane. It is right there, attached to the jet bridge. The gate door is closed. A gate agent is typing something with the calm of someone who has already decided. Boarding closed four minutes ago.",
+    "You missed boarding by four minutes. The plane is still at the gate, the door is closed, and the gate agent has already decided.",
   playerGoal: "Get on that plane.",
   npc: {
     role: "Gate agent",
@@ -115,7 +115,7 @@ const speeding: Scene = {
   id: "speeding",
   title: "The Traffic Stop",
   situation:
-    "Blue lights in the mirror. You were doing 52 in a 30 on a road you have driven a thousand times. The officer is walking up to your window slowly, the way they do. Your licence is already in your hand.",
+    "You were doing 52 in a 30. Blue lights, and the officer is walking up to your window.",
   playerGoal: "Drive away without a fine.",
   npc: {
     role: "Police officer",
@@ -192,7 +192,7 @@ const inlaws: Scene = {
   id: "inlaws",
   title: "The Weekend Away",
   situation:
-    "It is Tuesday evening. Your partner just said, \"So, my parents confirmed, we're going up Friday to Sunday,\" in the tone of someone who has already told you this twice. You did not hear it twice. You do not want to go. Their parents are fine. They are just a lot, and it is a whole weekend, and there is a sofa bed involved.",
+    "Your partner wants you both to spend the whole weekend at their parents' place. You don't want to go.",
   playerGoal: "Get out of the weekend without a fight.",
   npc: {
     role: "Your partner",
