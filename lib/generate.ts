@@ -42,7 +42,7 @@ function systemPrompt(scene: Scene, band: Band): string {
   const samples = scene.lines[band].map((l) => `- ${l.text}`).join("\n");
   const outcome =
     band === "persuaded"
-      ? "You have just decided to give them what they want. Say so, in character, and end it. Then, on a new line starting with CLOSING:, write ONE plain sentence of second-person narration (\"you\", present tense, no dialogue) stating what physically happens next, consistent with exactly how they won. Under 25 words. Concrete actions only: no feelings, no reflections, no metaphors."
+      ? "You have just decided to give them what they want. Say so, in character, and end it. Then, on a new line starting with CLOSING:, write ONE plain sentence of second-person narration (\"you\", present tense, no dialogue) stating what physically happens next, consistent with exactly how they won. Under 25 words. Concrete actions only: no feelings, no reflections, no metaphors. In the closing, \"you\" is the player; refer to yourself in the third person as \"" + scene.npc.role.toLowerCase() + "\" with they/them, and to your own relatives or colleagues as theirs, never the player's."
       : "You have NOT given them what they want. Do not open the door, waive anything, or agree. The scene continues.";
   return [
     `You write one line of dialogue for a character in a short persuasion game. You are the ${scene.npc.role.toLowerCase()}.`,
