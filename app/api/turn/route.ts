@@ -29,7 +29,14 @@ export async function POST(req: Request) {
       stateToken: encodeState(r.state),
     };
     if (debug) {
-      res.debug = { meter: r.state.meter, delta: r.delta, guarded: r.guarded, answers: r.answers };
+      res.debug = {
+        meter: r.state.meter,
+        delta: r.delta,
+        guarded: r.guarded,
+        instantWin: r.instantWin,
+        contributions: r.contributions,
+        answers: r.answers,
+      };
     }
     return NextResponse.json(res);
   } catch (e) {

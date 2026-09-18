@@ -121,18 +121,16 @@ export default function Game({
         <h2 className="text-2xl font-bold leading-tight">{scene.title}</h2>
         <p className="mt-2 text-fg/90">{scene.situation}</p>
         <p className="mt-3 font-semibold text-accent">{scene.playerGoal}</p>
-        <p className="mt-3 text-sm text-muted">
-          {scene.npcName}, {scene.npcRole.toLowerCase()}. You get {maxAttempts} attempts.
-        </p>
+        <p className="mt-3 text-sm text-muted">You get {maxAttempts} attempts.</p>
       </section>
 
       <section className="mt-4 flex flex-1 flex-col gap-3" aria-live="polite">
         {messages.map((m, i) => (
-          <Bubble key={i} msg={m} npcName={scene.npcName} />
+          <Bubble key={i} msg={m} npcRole={scene.npcRole} />
         ))}
         {busy && (
           <div className="self-start rounded-2xl rounded-bl-sm border border-border bg-panel px-4 py-3">
-            <span className="typing" aria-label={`${scene.npcName} is replying`}>
+            <span className="typing" aria-label="They are replying">
               <i /><i /><i />
             </span>
           </div>
@@ -201,7 +199,7 @@ export default function Game({
             rows={3}
             maxLength={maxChars}
             autoFocus
-            placeholder={`Say something to ${scene.npcName}...`}
+            placeholder="Say something..."
             className="w-full resize-none rounded-xl border border-border bg-panel px-4 py-3 text-base text-fg placeholder:text-muted focus:border-accent focus:outline-none disabled:opacity-60"
           />
           {error && (
@@ -225,7 +223,7 @@ export default function Game({
   );
 }
 
-function Bubble({ msg, npcName }: { msg: Msg; npcName: string }) {
+function Bubble({ msg, npcRole }: { msg: Msg; npcRole: string }) {
   if (msg.speaker === "player") {
     return (
       <div className="max-w-[88%] self-end rounded-2xl rounded-br-sm bg-player px-4 py-3 text-fg">
@@ -239,7 +237,7 @@ function Bubble({ msg, npcName }: { msg: Msg; npcName: string }) {
   return (
     <div className="max-w-[92%] self-start">
       <div className="rounded-2xl rounded-bl-sm border border-border bg-panel px-4 py-3">
-        <span className="mb-0.5 block text-xs font-semibold uppercase tracking-wider text-muted">{npcName}</span>
+        <span className="mb-0.5 block text-xs font-semibold uppercase tracking-wider text-muted">{npcRole}</span>
         {msg.text}
       </div>
       {msg.moodLabel && <p className="mt-1 px-1 text-sm text-muted">{msg.moodLabel}</p>}

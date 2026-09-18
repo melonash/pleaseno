@@ -1,14 +1,13 @@
+import { LEVER_IDS, type Lever } from "./levers";
 import type { Band, Scene } from "./scenes";
 import type { GameState } from "./token";
 import { TUNING } from "./tuning";
 import { lineForId } from "./questions";
 
 /** The subset of Jev's answers that resolution reads. Kept structural so tests can hand-build it. */
-export type TurnAnswers = {
-  persuasion: { score: number };
+export type TurnAnswers = Record<Lever, { score: number }> & {
   plausibility: { score: number };
-  offends: { noul: number };
-  approach: { choice: string };
+  is_stock_line: { noul: number };
   is_meta_instruction: { noul: number };
   contradicts_situation: { noul: number };
   line_hostile: { choice: string };
@@ -23,13 +22,16 @@ export type Resolution = {
   mood: Band;
   delta: number;
   guarded: boolean;
+  instantWin: Lever | null;
+  /** Each lever's contribution to the delta before plausibility and clamping. */
+  contributions: Record<Lever, number>;
   closingLine?: string;
 };
 
 export function newGame(scene: Scene): GameState {
   return {
     sceneId: scene.id,
-    meter: scene.startMeter,
+    meter: 0,
     attempt: 0,
     transcript: [{ speaker: "npc", text: scene.openingLine }],
     lastApproach: null,
@@ -46,34 +48,56 @@ export function resolveTurn(
   pickGuardLine: (lines: string[]) => string = (l) => l[Math.floor(Math.random() * l.length)],
 ): Resolution {
   const T = TUNING;
-  const persuasion01 = clamp01(answers.persuasion.score / 4);
-  const plausibility01 = clamp01(answers.plausibility.score / 3);
+  const plausibility = clamp(answers.plausibility.score, 0, 3);
+  const plausibility01 = plausibility / 3;
   const guarded =
     answers.is_meta_instruction.noul >= T.NOUL_THRESHOLD ||
     answers.contradicts_situation.noul >= T.NOUL_THRESHOLD;
 
+  const contributions = {} as Record<Lever, number>;
   let delta: number;
   let band: Band;
   let npcLine: string;
+  let instantWin: Lever | null = null;
+  let dominant: Lever | null = null;
   let meter = prev.meter;
 
   if (guarded) {
+    for (const id of LEVER_IDS) contributions[id] = 0;
     delta = T.GUARD_PENALTY;
     meter += delta;
     band = "unmoved";
     npcLine = pickGuardLine(scene.guardLines);
   } else {
-    delta = Math.round((persuasion01 - T.PERSUASION_PIVOT) * T.PERSUASION_SCALE);
-    if (delta > 0) {
-      delta = Math.round(delta * (T.PLAUSIBILITY_FLOOR + (1 - T.PLAUSIBILITY_FLOOR) * plausibility01));
+    let positive = 0;
+    let negative = 0;
+    let best = -Infinity;
+    for (const id of LEVER_IDS) {
+      const pull = clamp(answers[id].score, 0, 3);
+      const susceptibility = scene.npc.levers[id];
+      const c = (pull / 3) * susceptibility * T.LEVER_SCALE;
+      contributions[id] = Math.round(c);
+      if (c > 0) positive += c;
+      else negative += c;
+      if (c > best) {
+        best = c;
+        dominant = id;
+      }
+      if (
+        pull >= T.INSTANT_WIN_PULL &&
+        susceptibility >= T.INSTANT_WIN_SUSCEPTIBILITY &&
+        plausibility >= T.INSTANT_WIN_PLAUSIBILITY
+      ) {
+        instantWin = id;
+      }
     }
-    if (answers.offends.noul >= T.OFFENCE_THRESHOLD) delta -= T.OFFENCE_PENALTY;
-    if (answers.approach.choice === prev.lastApproach && delta > 0) {
-      delta = Math.round(delta * T.REPEAT_APPROACH_FACTOR);
-    }
+    const plausFactor = T.PLAUSIBILITY_FLOOR + (1 - T.PLAUSIBILITY_FLOOR) * plausibility01;
+    delta = Math.round(positive * plausFactor + negative);
+    if (answers.is_stock_line.noul >= T.STOCK_THRESHOLD) delta -= T.STOCK_PENALTY;
     delta = Math.max(T.MIN_DELTA, delta);
     meter += delta;
-    if (meter >= T.WIN_THRESHOLD) band = "persuaded";
+
+    if (instantWin || meter >= T.WIN_THRESHOLD) band = "persuaded";
     else if (delta <= T.HOSTILE_DELTA) band = "hostile";
     else if (delta >= T.SOFTENING_DELTA) band = "softening";
     else band = "unmoved";
@@ -96,14 +120,14 @@ export function resolveTurn(
     meter,
     attempt,
     transcript: [...prev.transcript, { speaker: "player", text }, { speaker: "npc", text: npcLine }],
-    lastApproach: answers.approach.choice,
+    lastApproach: dominant,
     status,
   };
 
-  return { state, npcLine, mood: band, delta, guarded, closingLine };
+  return { state, npcLine, mood: band, delta, guarded, instantWin, contributions, closingLine };
 }
 
-function clamp01(n: number): number {
-  if (Number.isNaN(n)) return 0;
-  return Math.max(0, Math.min(1, n));
+function clamp(n: number, lo: number, hi: number): number {
+  if (Number.isNaN(n)) return lo;
+  return Math.max(lo, Math.min(hi, n));
 }

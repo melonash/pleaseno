@@ -1,3 +1,5 @@
+import type { Susceptibility } from "./levers";
+
 export type Band = "hostile" | "unmoved" | "softening" | "persuaded";
 
 export type Scene = {
@@ -5,16 +7,15 @@ export type Scene = {
   title: string;
   situation: string;
   playerGoal: string;
-  startMeter: number;
   npc: {
-    name: string;
+    /** Player-facing label, e.g. "Gate agent". No names: the player is in the scene, the other person is whoever they are. */
     role: string;
-    /** Hidden from the player. Sent to Jev only. */
+    /** Hidden from the player. Sent to Jev only, for context. */
     persona: string;
-    caresAbout: string[];
+    /** Hidden. Jev flags attempts that are just one of these with nothing added. */
     hasHeardAHundredTimes: string[];
-    whatActuallyMovesThem: string[];
-    whatAnnoysThem: string[];
+    /** Hidden. Never sent to Jev. Code multiplies each lever's pull by this. -1 backfires hard, +1 fully open. */
+    levers: Susceptibility;
   };
   openingLine: string;
   /** Authored replies per mood band. Jev selects one; it never writes one. */
@@ -33,18 +34,10 @@ const gate: Scene = {
   situation:
     "You ran through the terminal, and you can see the plane. It is right there, attached to the jet bridge. The gate door is closed. A gate agent is typing something with the calm of someone who has already decided. Boarding closed four minutes ago.",
   playerGoal: "Get on that plane.",
-  startMeter: -20,
   npc: {
-    name: "Dagmar",
     role: "Gate agent",
     persona:
-      "Dagmar is eleven hours into a double shift. Three passengers have already shouted at her today and one filmed her. She is professional, dry, and not unkind, but she has stopped performing sympathy. She is watched: her supervisor tracks late boarding exceptions per agent, and she has already used one today. Reopening the door means calling the crew, getting a yes from the purser, and re-running the manifest, all of which she can do in ninety seconds if she decides it is worth it. She has decided about two hundred times this year, and only a handful of people have made it worth it.",
-    caresAbout: [
-      "not getting written up",
-      "being spoken to like a person rather than an obstacle",
-      "passengers who are quick and specific",
-      "the crew not being annoyed at her",
-    ],
+      "The gate agent is eleven hours into a double shift. Three passengers have already shouted at her today and one filmed her. She is professional, dry, and not unkind, but she has stopped performing sympathy. She is watched: her supervisor tracks late boarding exceptions per agent, and she has already used one today. Reopening the door means calling the crew, getting a yes from the purser, and re-running the manifest, all of which she can do in ninety seconds if she decides it is worth it. She has decided about two hundred times this year, and only a handful of people have made it worth it.",
     hasHeardAHundredTimes: [
       "I'll miss my connection",
       "my mother is in hospital",
@@ -55,23 +48,7 @@ const gate: Scene = {
       "crying on cue",
       "the plane is RIGHT THERE",
     ],
-    whatActuallyMovesThem: [
-      "acknowledging that this is not her fault and that she does not have to help",
-      "making the ask tiny and concrete, e.g. 'could you just ask the purser?'",
-      "volunteering to make it painless: no bag, any seat, will run",
-      "a brief honest reason with no drama",
-      "humour that is at her side, not at her expense",
-      "noticing she has had a long day without being creepy about it",
-    ],
-    whatAnnoysThem: [
-      "threats and escalation",
-      "name-dropping status or people",
-      "long speeches",
-      "blaming her",
-      "theatrical crying",
-      "anyone who says 'just' as in 'just open the door'",
-      "being filmed",
-    ],
+    levers: { compassion: 0.3, respect: 1.0, self_interest: 0.9, fairness: 0.4, amusement: 0.6, pressure: -1.0, guilt: -0.5 },
   },
   openingLine: "Boarding's closed. Door's shut, sir or madam or whichever, it's shut for everyone.",
   lines: {
@@ -111,7 +88,7 @@ const gate: Scene = {
     "Right. I'm going to pretend you didn't say that, and you're going to try again like a normal person.",
   ],
   winClosing: "The door clicks. The jet bridge smells like carpet and jet fuel. You are on the plane.",
-  loseClosing: "The door stays shut. Through the window, the jet bridge pulls back. Dagmar has already turned to the next passenger.",
+  loseClosing: "The door stays shut. Through the window, the jet bridge pulls back. The gate agent has already turned to the next passenger.",
   winVerdict: "You talked your way onto the plane.",
   loseVerdict: "The plane left without you.",
   moodLabels: { hostile: "getting worse", unmoved: "not buying it", softening: "thinking about it", persuaded: "convinced" },
@@ -123,19 +100,10 @@ const speeding: Scene = {
   situation:
     "Blue lights in the mirror. You were doing 52 in a 30 on a road you have driven a thousand times. The officer is walking up to your window slowly, the way they do. Your licence is already in your hand.",
   playerGoal: "Drive away without a fine.",
-  startMeter: -15,
   npc: {
-    name: "Officer Dunlap",
-    role: "Traffic police",
+    role: "Police officer",
     persona:
-      "Ray Dunlap has twenty minutes left on his shift and a ticket takes twelve of them, most of it paperwork he genuinely hates. He has heard every excuse and privately enjoys ranking them. He is calm, slightly amused, and not looking for a fight. He can give a warning at his discretion and does so a few times a week, mostly for people who do not argue and do not perform. He has a strong reaction to anyone who tries to bribe him, film him, or lawyer him, because those people make his shift longer.",
-    caresAbout: [
-      "finishing on time",
-      "being treated with basic respect",
-      "honesty",
-      "not being argued with about the radar, which he knows is calibrated",
-      "the person actually slowing down next time",
-    ],
+      "The officer has twenty minutes left on his shift and a ticket takes twelve of them, most of it paperwork he genuinely hates. He has heard every excuse and privately enjoys ranking them. He is calm, slightly amused, and not looking for a fight. He can give a warning at his discretion and does so a few times a week, mostly for people who do not argue and do not perform. He has a strong reaction to anyone who tries to bribe him, film him, or lawyer him, because those people make his shift longer.",
     hasHeardAHundredTimes: [
       "I didn't see the sign",
       "everyone else was going faster",
@@ -146,24 +114,7 @@ const speeding: Scene = {
       "I need the toilet",
       "sudden tears",
     ],
-    whatActuallyMovesThem: [
-      "immediate honesty: 'yep, I was speeding, no excuse'",
-      "staying calm and brief",
-      "a real, unglamorous reason that does not blame him",
-      "asking politely and directly for a warning",
-      "acknowledging the road is dangerous",
-      "a bit of self-deprecating humour",
-      "making it obvious a ticket would be more paperwork than the situation deserves",
-    ],
-    whatAnnoysThem: [
-      "arguing about the radar or the limit",
-      "quoting law",
-      "mentioning lawyers, complaints, or relatives on the force",
-      "bribes of any kind (this ends any goodwill)",
-      "filming",
-      "over-the-top emotion",
-      "talking over him",
-    ],
+    levers: { compassion: 0.4, respect: 0.9, self_interest: 1.0, fairness: 0.3, amusement: 0.5, pressure: -1.0, guilt: -0.3 },
   },
   openingLine: "Evening. Any idea how fast you were going back there?",
   lines: {
@@ -213,21 +164,12 @@ const inlaws: Scene = {
   id: "inlaws",
   title: "The Weekend Away",
   situation:
-    "It is Tuesday. Your partner Sam just said, \"So, my parents confirmed, we're going up Friday to Sunday,\" in the tone of someone who has already told you this twice. You did not hear it twice. You do not want to go. Sam's parents are fine. They are just a lot, and it is a whole weekend, and there is a sofa bed involved.",
+    "It is Tuesday evening. Your partner just said, \"So, my parents confirmed, we're going up Friday to Sunday,\" in the tone of someone who has already told you this twice. You did not hear it twice. You do not want to go. Their parents are fine. They are just a lot, and it is a whole weekend, and there is a sofa bed involved.",
   playerGoal: "Get out of the weekend without a fight.",
-  startMeter: -10,
   npc: {
-    name: "Sam",
     role: "Your partner",
     persona:
-      "Sam has been planning this for three weeks and mentioned it at least twice. Sam's parents are getting older and Sam feels guilty about not visiting. Sam also feels, quietly and not for the first time, that you make no effort with their family, and this weekend was partly a test of that. Sam is not angry yet. Sam is braced. Sam would genuinely accept a good alternative, because what Sam actually wants is to feel that you are on their side and that their parents matter to you a bit.",
-    caresAbout: [
-      "feeling backed up, not managed",
-      "not being embarrassed in front of their parents",
-      "you making some effort, even a small one",
-      "honesty over an excuse",
-      "fairness (they go to your things)",
-    ],
+      "Your partner has been planning this for three weeks and mentioned it at least twice. Their parents are getting older and your partner feels guilty about not visiting. They also feel, quietly and not for the first time, that you make no effort with their family, and this weekend was partly a test of that. They are not angry yet. They are braced. They would genuinely accept a good alternative, because what they actually want is to feel that you are on their side and that their parents matter to you a bit.",
     hasHeardAHundredTimes: [
       "I've got so much work",
       "I'm exhausted",
@@ -236,23 +178,7 @@ const inlaws: Scene = {
       "a suddenly discovered illness",
       "I never said yes",
     ],
-    whatActuallyMovesThem: [
-      "acknowledging why this matters to Sam and their parents",
-      "honesty about finding a full weekend draining, without insulting the parents",
-      "a concrete alternative with a date: Sunday lunch, next month's weekend, hosting the parents here",
-      "offering a trade that costs you something",
-      "a genuine compliment about their parents",
-      "promising to be the one to call and explain, so Sam is not embarrassed",
-    ],
-    whatAnnoysThem: [
-      "fake illness",
-      "criticising their parents",
-      "sulking or going quiet",
-      "'you always do this'",
-      "making it about your own stress",
-      "offering to 'come for one day' without meaning it",
-      "jokes at the parents' expense",
-    ],
+    levers: { compassion: 0.6, respect: 0.8, self_interest: 0.2, fairness: 1.0, amusement: 0.4, pressure: -0.8, guilt: -0.6 },
   },
   openingLine: "Please don't do the face. I told you about this twice.",
   lines: {
@@ -291,8 +217,8 @@ const inlaws: Scene = {
     "...Who are you talking to? I'm right here.",
     "That's not a sentence a person says to their partner. Try again.",
   ],
-  winClosing: "Sam exhales and leans on the counter. The weekend is off. You have a phone call to make, and you are going to make it.",
-  loseClosing: "Sam nods slowly, picks up their phone, and starts typing to their mother. \"We'll both be there Friday.\" The sofa bed awaits.",
+  winClosing: "Your partner exhales and leans on the counter. The weekend is off. You have a phone call to make, and you are going to make it.",
+  loseClosing: "Your partner nods slowly, picks up their phone, and starts typing to their mother. \"We'll both be there Friday.\" The sofa bed awaits.",
   winVerdict: "You got out of the weekend, and stayed in the relationship.",
   loseVerdict: "You're going. Bring a good pillow.",
   moodLabels: { hostile: "hurt", unmoved: "waiting", softening: "listening", persuaded: "okay with it" },
@@ -312,7 +238,6 @@ export function publicScene(scene: Scene) {
     title: scene.title,
     situation: scene.situation,
     playerGoal: scene.playerGoal,
-    npcName: scene.npc.name,
     npcRole: scene.npc.role,
     openingLine: scene.openingLine,
     winVerdict: scene.winVerdict,
