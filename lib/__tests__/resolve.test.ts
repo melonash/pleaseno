@@ -77,10 +77,11 @@ describe("resolveTurn", () => {
   it("answers the lever that explains the mood: a threat with a whimper of compassion gets the pressure line", () => {
     // compassion 1.5/3 x 0.8 x 60 = 24 ; pressure 2.5/3 x -1 x 60 = -50 -> -26 hostile
     const pressureIdx = gate.lines.hostile.findIndex((l) => l.lever === "pressure");
+    const guiltId = `h${gate.lines.hostile.findIndex((l) => l.lever === "guilt") + 1}`;
     const r = resolveTurn(gate, newGame(gate), "x", answers({
       compassion: { score: 1.5 },
       pressure: { score: 2.5 },
-      line_hostile: { choice: "h4", probabilities: { h4: 0.5, [`h${pressureIdx + 1}`]: 0.3 } },
+      line_hostile: { choice: guiltId, probabilities: { [guiltId]: 0.5, [`h${pressureIdx + 1}`]: 0.3 } },
     }));
     expect(r.mood).toBe("hostile");
     expect(r.lever).toBe("pressure");
