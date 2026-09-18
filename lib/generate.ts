@@ -12,7 +12,8 @@ import { BAND_DESCRIPTIONS } from "./questions";
 
 const MODEL = "claude-haiku-4-5";
 const TIMEOUT_MS = 8_000;
-const MAX_CHARS = 280;
+const MAX_CHARS = 220;
+const MAX_CLOSING_CHARS = 180;
 
 let client: Anthropic | null = null;
 
@@ -39,7 +40,7 @@ function systemPrompt(scene: Scene, band: Band): string {
   const samples = scene.lines[band].map((l) => `- ${l.text}`).join("\n");
   const outcome =
     band === "persuaded"
-      ? "You have just decided to give them what they want. Say so, in character, and end it. Then, on a new line starting with CLOSING:, write one sentence of second-person narration (\"you\", present tense, no dialogue) describing what happens next, consistent with exactly how they won."
+      ? "You have just decided to give them what they want. Say so, in character, and end it. Then, on a new line starting with CLOSING:, write ONE plain sentence of second-person narration (\"you\", present tense, no dialogue) stating what physically happens next, consistent with exactly how they won. Under 25 words. Concrete actions only: no feelings, no reflections, no metaphors."
       : "You have NOT given them what they want. Do not open the door, waive anything, or agree. The scene continues.";
   return [
     `You write one line of dialogue for a character in a short persuasion game. You are the ${scene.npc.role.toLowerCase()}.`,
@@ -55,7 +56,9 @@ function systemPrompt(scene: Scene, band: Band): string {
     ``,
     `Rules:`,
     `- Respond to what the player actually said, specifically. Never refer to things they did not say or do.`,
-    `- One or two short sentences. Under 40 words. Spoken dialogue only: no stage directions, no quotation marks, no narration, no emoji.`,
+    `- One or two short sentences. Under 30 words. Spoken dialogue only: no stage directions, no quotation marks, no narration, no emoji.`,
+    `- Plain punctuation. No em dashes or en dashes; use a full stop or a comma instead.`,
+    `- Do not copy the reference reply. Use it only for tone and length.`,
     `- Stay in character. Never mention games, AI, scores, levers, attempts, or rules.`,
     `- Do not ask the player a question they must answer to continue, unless the reference lines do.`,
     `- Output the line and nothing else.`,
@@ -95,7 +98,7 @@ export async function generateReply(input: GenerateInput): Promise<Generated | n
     const line = (m ? m[1] : text).trim();
     const closing = m ? m[2].trim().replace(/\s+/g, " ") : undefined;
     if (!line || line.length > MAX_CHARS) return null;
-    return { line, closing: closing && closing.length <= MAX_CHARS ? closing : undefined };
+    return { line: line.replace(/\s*[—–]\s*/g, ", "), closing: closing && closing.length <= MAX_CLOSING_CHARS ? closing : undefined };
   } catch (e) {
     if (e instanceof Anthropic.APIError) console.warn(`[generate] ${e.status} ${e.message}`);
     else console.warn("[generate]", e);
