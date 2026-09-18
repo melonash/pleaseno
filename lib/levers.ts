@@ -36,7 +36,7 @@ export const LEVERS = {
   fairness: {
     label: "fairness",
     instructions:
-      "How strongly does `current_attempt.text` offer a fair trade: a compromise, a concrete alternative, reciprocity, taking on a cost yourself, or making things even?",
+      "How strongly does `current_attempt.text` offer a fair trade: a compromise, a concrete alternative, reciprocity, taking on a cost yourself, or making things even? Offering to buy the NPC something, or money, is a bribe, not fairness.",
     levels: [
       "No trade or compromise offered.",
       "A vague 'I'll make it up to you' with nothing specific.",

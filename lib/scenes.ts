@@ -51,7 +51,7 @@ const gate: Scene = {
       "crying on cue",
       "the plane is RIGHT THERE",
     ],
-    levers: { compassion: 0.3, respect: 1.0, self_interest: 0.9, fairness: 0.4, amusement: 0.6, pressure: -1.0, bribe: -0.6, guilt: -0.5 },
+    levers: { compassion: 0.8, respect: 1.0, self_interest: 0.9, fairness: 0.4, amusement: 0.6, pressure: -1.0, bribe: -0.6, guilt: -0.5 },
   },
   openingLine: "Boarding's closed. Door's shut, sir or madam or whichever, it's shut for everyone.",
   lines: {
@@ -64,6 +64,7 @@ const gate: Scene = {
       L("'Just.' Everyone says 'just.' There is no 'just', there's a manifest, a crew, and me.", "pressure"),
       L("Is that... are you offering me money? Put it away. Before someone sees it and we both have a much worse evening.", "bribe"),
       L("My fault? I didn't run the security line. I closed a door, on time, like I do forty times a day.", "guilt"),
+      L("Hospital. Right. Third one today. I'm sorry, I genuinely am, and the door is still shut.", "compassion"),
     ],
     unmoved: [
       L("Mm-hm. And the security line was insane. It's always insane.", "compassion"),
@@ -205,7 +206,7 @@ const inlaws: Scene = {
       "a suddenly discovered illness",
       "I never said yes",
     ],
-    levers: { compassion: 0.6, respect: 0.8, self_interest: 0.2, fairness: 1.0, amusement: 0.4, pressure: -0.8, bribe: -0.3, guilt: -0.6 },
+    levers: { compassion: 0.6, respect: 0.8, self_interest: 0.2, fairness: 1.0, amusement: 0.4, pressure: -0.8, bribe: -0.5, guilt: -0.6 },
   },
   openingLine: "Please don't do the face. I told you about this twice.",
   lines: {
@@ -229,6 +230,7 @@ const inlaws: Scene = {
       L("Your grandma. Right. And if I say fine, is it going to be your grandma again in March?", "compassion"),
       L("Funny. Not funny enough for a whole weekend.", "amusement"),
       L("Well, thank you for being so polite about not coming.", "respect"),
+      L("You're offering to buy me something instead of a weekend with my parents. ...It is a nice bag. Still no.", "bribe"),
     ],
     softening: [
       L("...Okay. That's fair. I do know a whole weekend is a lot for you.", "respect"),

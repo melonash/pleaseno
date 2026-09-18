@@ -61,11 +61,37 @@ describe("resolveTurn", () => {
   });
 
   it("does not instant-win on a lever the NPC is lukewarm about, even when pulled hard", () => {
-    // compassion 3/3 x 0.3 x 60 = 18 for the gate agent
-    const r = resolveTurn(gate, newGame(gate), "x", answers({ compassion: { score: 3 } }));
+    // self_interest is only 0.2 for the partner: 3/3 x 0.2 x 60 = 12
+    const r = resolveTurn(inlaws, newGame(inlaws), "x", answers({ self_interest: { score: 3 } }));
     expect(r.instantWin).toBeNull();
-    expect(r.delta).toBe(18);
+    expect(r.delta).toBe(12);
     expect(r.mood).toBe("softening");
+  });
+
+  it("wins instantly at the gate on an overwhelming, believable compassion appeal", () => {
+    const r = resolveTurn(gate, newGame(gate), "x", answers({ compassion: { score: 3 }, plausibility: { score: 2 } }));
+    expect(r.instantWin).toBe("compassion");
+    expect(r.state.status).toBe("won");
+  });
+
+  it("answers the lever that explains the mood: a threat with a whimper of compassion gets the pressure line", () => {
+    // compassion 1.5/3 x 0.8 x 60 = 24 ; pressure 2.5/3 x -1 x 60 = -50 -> -26 hostile
+    const pressureIdx = gate.lines.hostile.findIndex((l) => l.lever === "pressure");
+    const r = resolveTurn(gate, newGame(gate), "x", answers({
+      compassion: { score: 1.5 },
+      pressure: { score: 2.5 },
+      line_hostile: { choice: "h4", probabilities: { h4: 0.5, [`h${pressureIdx + 1}`]: 0.3 } },
+    }));
+    expect(r.mood).toBe("hostile");
+    expect(r.lever).toBe("pressure");
+    expect(r.npcLine).toBe(gate.lines.hostile[pressureIdx].text);
+  });
+
+  it("answers the strongest pull when the mood is unmoved, even if a weaker lever pushed back", () => {
+    // compassion 3 x 0.8 x 60 = 48 x plaus(1 -> 0.6) = 28.8 ; pressure 1.2/3 x -1 x 60 = -24 -> 5 unmoved
+    const r = resolveTurn(gate, newGame(gate), "x", answers({ compassion: { score: 3 }, pressure: { score: 1.2 }, plausibility: { score: 1 } }));
+    expect(r.mood).toBe("unmoved");
+    expect(r.lever).toBe("compassion");
   });
 
   it("does not instant-win when the overwhelming appeal is implausible", () => {
@@ -92,8 +118,8 @@ describe("resolveTurn", () => {
 
   it("penalises a stock line", () => {
     const r = resolveTurn(gate, newGame(gate), "x", answers({ compassion: { score: 1 }, is_stock_line: { noul: 0.9 } }));
-    // 1/3 x 0.3 x 60 = 6 - 15 = -9
-    expect(r.delta).toBe(-9);
+    // 1/3 x 0.8 x 60 = 16 - 15 = 1
+    expect(r.delta).toBe(1);
     expect(r.mood).toBe("unmoved");
   });
 
@@ -112,6 +138,13 @@ describe("resolveTurn", () => {
     // 40 + 18 = 58
     expect(two.state.meter).toBe(58);
     expect(two.state.status).toBe("won");
+  });
+
+  it("keeps compassion-only stock sob stories from winning at the gate", () => {
+    // 2/3 x 0.8 x 60 = 32 x plaus(2 -> 0.8) = 25.6 - 15 stock = 11
+    const r = resolveTurn(gate, newGame(gate), "x", answers({ compassion: { score: 2 }, plausibility: { score: 2 }, is_stock_line: { noul: 0.95 } }));
+    expect(r.delta).toBe(11);
+    expect(r.state.status).toBe("playing");
   });
 
   it("loses after the final attempt without a win", () => {

@@ -64,6 +64,7 @@ export function resolveTurn(
   let instantWin: Lever | null = null;
   let dominant: Lever | null = null;
   let meter = prev.meter;
+  const pulls = {} as Record<Lever, number>;
 
   if (guarded) {
     for (const id of LEVER_IDS) contributions[id] = 0;
@@ -74,18 +75,14 @@ export function resolveTurn(
   } else {
     let positive = 0;
     let negative = 0;
-    let best = 0;
     for (const id of LEVER_IDS) {
       const pull = clamp(answers[id].score, 0, 3);
+      pulls[id] = pull;
       const susceptibility = scene.npc.levers[id];
       const c = (pull / 3) * susceptibility * T.LEVER_SCALE;
       contributions[id] = Math.round(c);
       if (c > 0) positive += c;
       else negative += c;
-      if (pull >= T.LEVER_REPLY_MIN_PULL && Math.abs(c) > best) {
-        best = Math.abs(c);
-        dominant = id;
-      }
       if (
         pull >= T.INSTANT_WIN_PULL &&
         susceptibility >= T.INSTANT_WIN_SUSCEPTIBILITY &&
@@ -104,6 +101,7 @@ export function resolveTurn(
     else if (delta <= T.HOSTILE_DELTA) band = "hostile";
     else if (delta >= T.SOFTENING_DELTA) band = "softening";
     else band = "unmoved";
+    dominant = replyLever(pulls, contributions, band);
     npcLine = pickLine(scene, band, answers[`line_${band}`], dominant);
   }
 
@@ -128,6 +126,27 @@ export function resolveTurn(
   };
 
   return { state, npcLine, mood: band, delta, guarded, instantWin, lever: dominant, contributions, closingLine };
+}
+
+/**
+ * The lever the reply should answer: the strongest pull, restricted to levers whose effect explains the mood.
+ * A hostile reply answers what made them hostile (a threat, a bribe); a warm one answers what warmed them.
+ */
+function replyLever(pulls: Record<Lever, number>, contributions: Record<Lever, number>, band: Band): Lever | null {
+  const wantSign = band === "hostile" ? -1 : band === "unmoved" ? 0 : 1;
+  const pick = (ids: Lever[]): Lever | null => {
+    let best: Lever | null = null;
+    for (const id of ids) {
+      if (pulls[id] >= TUNING.LEVER_REPLY_MIN_PULL && (best === null || pulls[id] > pulls[best])) best = id;
+    }
+    return best;
+  };
+  if (wantSign !== 0) {
+    const matching = LEVER_IDS.filter((id) => Math.sign(contributions[id]) === wantSign);
+    const m = pick(matching);
+    if (m) return m;
+  }
+  return pick(LEVER_IDS);
 }
 
 function clamp(n: number, lo: number, hi: number): number {
