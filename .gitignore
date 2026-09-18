@@ -1,0 +1,27 @@
+# local design docs, not for the repo
+ONESHOT-PROMPT.md
+CLAUDE.md
+
+# secrets
+.env
+.env.*
+!.env.example
+
+# node / next
+node_modules/
+.next/
+out/
+build/
+dist/
+*.tsbuildinfo
+next-env.d.ts
+
+# vercel
+.vercel/
+
+# tooling and OS
+coverage/
+.DS_Store
+*.log
+npm-debug.log*
+.claude/
