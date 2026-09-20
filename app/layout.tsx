@@ -1,9 +1,19 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
+const siteUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL
+  ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+  : "http://localhost:3000";
+
+const title = "Talk Your Way Out";
+const description = "Three attempts to talk your way past someone who has heard it all.";
+
 export const metadata: Metadata = {
-  title: "Talk Your Way Out",
-  description: "Three attempts to talk your way past someone who has heard it all.",
+  metadataBase: new URL(siteUrl),
+  title,
+  description,
+  openGraph: { title, description, type: "website", url: "/", siteName: title },
+  twitter: { card: "summary_large_image", title, description },
 };
 
 export const viewport: Viewport = {
