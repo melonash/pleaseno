@@ -160,16 +160,12 @@ export default function Game({
 
         <div className="game-column">
           <section className="challenge" aria-labelledby="scene-title">
-            <p className="eyebrow">Scene {index + 1} of {scenes.length}</p>
             <h1 id="scene-title">
               {scene.title}
               <span className="heading-period">.</span>
             </h1>
             <p className="instruction">{scene.situation}</p>
-            <div className="target">
-              <span className="target-goal">{scene.playerGoal}</span>
-              <span className="target-label">Your goal</span>
-            </div>
+            <p className="target-goal">{scene.playerGoal}</p>
             <p className="reads-note">
               They read every attempt for {LEVER_IDS.map((id, i) => (
                 <span key={id}>

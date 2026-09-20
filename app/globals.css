@@ -92,13 +92,10 @@ button:focus-visible, a:focus-visible, textarea:focus-visible { outline: 2px sol
 .game-column { max-width: 440px; margin: 0 auto; }
 
 .challenge { text-align: center; padding-top: 45px; }
-.eyebrow { letter-spacing: 2.3px; color: var(--muted-foreground); margin: 0 0 17px; font-size: .75rem; text-transform: uppercase; }
 .challenge h1 { letter-spacing: -1.7px; text-wrap: balance; margin: 0 -10px; font-family: Georgia, serif; font-size: clamp(2rem, 5vw, 2.75rem); font-weight: 400; line-height: 1.13; }
 .heading-period { color: var(--terracotta); }
 .instruction { color: var(--muted-foreground); margin: 18px 0 0; font-size: 1rem; line-height: 1.65; text-wrap: pretty; }
-.target { flex-direction: column; align-items: center; margin-top: 22px; display: flex; }
-.target-goal { letter-spacing: -0.8px; color: var(--terracotta); font-family: Georgia, serif; font-size: clamp(1.5rem, 6vw, 2rem); line-height: 1.2; text-wrap: balance; }
-.target-label { letter-spacing: 2.2px; color: var(--terracotta); margin-top: 10px; font-size: .75rem; text-transform: uppercase; }
+.target-goal { margin: 22px 0 0; letter-spacing: -0.8px; color: var(--terracotta); font-family: Georgia, serif; font-size: clamp(1.5rem, 6vw, 2rem); line-height: 1.2; text-wrap: balance; }
 
 
 .reads-note { color: var(--muted-foreground); margin: 22px 0 0; font-size: .875rem; line-height: 1.6; text-wrap: pretty; }
@@ -167,7 +164,7 @@ button:focus-visible, a:focus-visible, textarea:focus-visible { outline: 2px sol
   .wordmark { letter-spacing: -1.1px; font-size: 1.5rem; }
   .challenge { padding-top: 32px; }
   .challenge h1 { margin: 0; font-size: 2.2rem; }
-  .target { margin-top: 20px; }
+  .target-goal { margin-top: 20px; }
   .game-footer { margin-top: 24px; }
 }
 @media (max-width: 350px) {
