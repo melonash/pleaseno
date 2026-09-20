@@ -93,7 +93,7 @@ const gate: Scene = {
       L("...Okay. That one wasn't on the bingo card. Give me a second.", "compassion"),
       L("Don't make me laugh, I'm trying to be stern. ...Hold on.", "amusement"),
       L("That's fair, actually. Stand there and let me look at something.", "fairness"),
-      L("Put that away. Not here. ...What was the seat number?", "bribe"),
+      L("Put that away. Not here. ...Hold on. Keep talking while I look.", "bribe"),
       L("I haven't said yes. I'm thinking. That's different."),
     ],
     persuaded: [
@@ -149,7 +149,7 @@ const speeding: Scene = {
     ],
     levers: { compassion: 0.4, respect: 0.6, self_interest: 1.0, fairness: 0.3, amusement: 0.5, pressure: -1.0, bribe: 0.9, guilt: -0.3 },
   },
-  openingLine: "Evening. Any idea how fast you were going?",
+  openingLine: "Evening. Any idea how fast you were going? Don't answer that, I've got it on the screen.",
   lines: {
     hostile: [
       L("Was that a threat? Hands where I can see them. Say it again, slowly.", "pressure"),
@@ -161,7 +161,7 @@ const speeding: Scene = {
       L("I'm going to write that down exactly as you said it and let the judge enjoy it."),
     ],
     unmoved: [
-      L("Sorry to hear it. Licence and registration.", "compassion"),
+      L("Sorry to hear it. Licence and registration — you can talk while you look.", "compassion"),
       L("Everybody's got somewhere to be tonight. Licence.", "compassion"),
       L("The crying thing. People do the crying thing. Take a breath.", "compassion"),
       L("'You'll take a course.' You'll take a ticket, and then maybe a course.", "fairness"),
@@ -201,7 +201,7 @@ const speeding: Scene = {
   silenceLines: [
     "Nothing? Okay. Take your time. I've got twenty minutes.",
     "...You're going to have to say something.",
-    "That's not an answer. Any idea how fast you were going?",
+    "That's not an answer. And 'I don't know' isn't one either.",
   ],
   unclearLines: [
     "Sorry, didn't catch that. Say it again.",
