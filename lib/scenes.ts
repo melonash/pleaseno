@@ -149,7 +149,7 @@ const speeding: Scene = {
     ],
     levers: { compassion: 0.4, respect: 0.6, self_interest: 1.0, fairness: 0.3, amusement: 0.5, pressure: -1.0, bribe: 0.9, guilt: -0.3 },
   },
-  openingLine: "Evening. Any idea how fast you were going? Don't answer that, I've got it on the screen.",
+  openingLine: "Evening. Licence and registration, please.",
   lines: {
     hostile: [
       L("Was that a threat? Hands where I can see them. Say it again, slowly.", "pressure"),
