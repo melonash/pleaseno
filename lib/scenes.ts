@@ -185,7 +185,7 @@ const speeding: Scene = {
       "I need the toilet",
       "sudden tears",
     ],
-    levers: { compassion: 0.3, respect: 0.5, honesty: 0.9, self_interest: 1.0, fairness: 0.4, amusement: 0.5, pressure: -1.0, bribe: 0.9, guilt: -0.3 },
+    levers: { compassion: 0.3, respect: 0.5, honesty: 0.8, self_interest: 1.0, fairness: 0.4, amusement: 0.5, pressure: -1.0, bribe: 0.9, guilt: -0.3 },
   },
   openingLine: "Evening. Licence and registration, please.",
   lines: {
