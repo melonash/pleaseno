@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { asksForFacts, soundsLikeWaiting } from "../generate";
+import { asksForFacts, misquotesSelf, soundsLikeWaiting } from "../generate";
 import { ROTATION, getScene } from "../scenes";
 
 describe("line rules", () => {
@@ -62,5 +62,17 @@ describe("generated reply references", () => {
         expect(lines.some((l) => !l.lever), `${id} ${band}`).toBe(true);
       }
     }
+  });
+});
+
+describe("misquotes", () => {
+  const said = ["Boarding's closed. The door's shut, and it's shut for everyone.", "That's the first thing you've said that isn't about you missing something. Go on."];
+  it("catches the NPC agreeing to words it never said", () => {
+    expect(misquotesSelf("I said stand here while I think about it. That's not the same as yes.", said)).toBe(true);
+  });
+  it("lets denials and accurate quotes through", () => {
+    expect(misquotesSelf("I said nothing of the kind. I told you to keep talking.", [...said, "Keep talking."])).toBe(false);
+    expect(misquotesSelf("I said the door's shut for everyone. I meant it.", said)).toBe(false);
+    expect(misquotesSelf("Don't thank me yet.", said)).toBe(false);
   });
 });

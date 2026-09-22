@@ -64,6 +64,23 @@ export function asksForFacts(line: string): boolean {
   return FACT_QUESTION.test(line);
 }
 
+/**
+ * True when the line quotes the NPC ("I said stand here", "I told you to wait") with words the NPC never said.
+ * The player can claim anything; the NPC must not go along with it. Denials ("I said nothing of the kind") pass.
+ */
+export function misquotesSelf(line: string, npcLines: string[]): boolean {
+  const said = new Set(npcLines.join(" ").toLowerCase().match(/[\p{L}']+/gu) ?? []);
+  for (const m of line.matchAll(/\bI (?:said|told you)\b([^.?!]*)/gi)) {
+    const claim = m[1].trim().toLowerCase();
+    if (!claim || /^(nothing|no\b|never|not\b|that\b)/.test(claim)) continue;
+    const words = (claim.match(/[\p{L}']+/gu) ?? []).filter((w) => w.length >= 4);
+    if (words.length === 0) continue;
+    const known = words.filter((w) => said.has(w)).length;
+    if (known / words.length < 0.6) return true;
+  }
+  return false;
+}
+
 const CONSIDERING =
   "You have NOT given them what they want and you are not arranging it. Do not tell them to wait, hold on, stand anywhere or stay quiet, and do not say you are checking, calling or arranging anything. Do not imply a yes is coming. End by inviting them to say more, without telling them what to say or which argument is working.";
 
@@ -150,6 +167,7 @@ export async function generateReply(input: GenerateInput): Promise<Generated | n
     const closing = m ? m[2].trim().replace(/\s+/g, " ") : undefined;
     if (!line || line.length > MAX_CHARS) return null;
     if ((free || band !== "persuaded") && (soundsLikeWaiting(line) || asksForFacts(line))) return null;
+    if (misquotesSelf(line, transcript.filter((t) => t.speaker === "npc").map((t) => t.text))) return null;
     return { line: line.replace(/\s*[—–]\s*/g, ", "), closing: closing && closing.length <= MAX_CLOSING_CHARS ? closing : undefined };
   } catch (e) {
     if (e instanceof Anthropic.APIError) console.warn(`[generate] ${e.status} ${e.message}`);
