@@ -16,6 +16,15 @@ type Msg = {
   guarded?: boolean;
   nonTurn?: "silence" | "unclear" | "free" | "unsure";
   guard?: "meta" | "contradiction" | null;
+  /** Only with ?debug=1: what the server sent back for this attempt, kept so the whole game can be copied. */
+  debug?: TurnDebug;
+};
+type TurnDebug = {
+  meter?: number;
+  delta?: number;
+  repeat?: boolean;
+  instantWin?: string | null;
+  answers?: Record<string, { score?: number; noul?: number }>;
 };
 type Status = "playing" | "won" | "lost";
 
@@ -33,7 +42,7 @@ type TurnResponse = {
   nonTurn?: "silence" | "unclear" | "free" | "unsure";
   guard?: "meta" | "contradiction" | null;
   stateToken: string;
-  debug?: unknown;
+  debug?: TurnDebug;
   error?: string;
 };
 
@@ -119,7 +128,7 @@ export default function Game({
       setMessages((m) => {
         const withPulls = m.map((msg, i) =>
           i === m.length - 1 && msg.speaker === "player"
-            ? { ...msg, pulls: data.pulls, lever: data.lever, guarded: data.guarded, guard: data.guard, nonTurn: data.nonTurn }
+            ? { ...msg, pulls: data.pulls, lever: data.lever, guarded: data.guarded, guard: data.guard, nonTurn: data.nonTurn, debug: data.debug }
             : msg,
         );
         const next: Msg[] = [...withPulls, { speaker: "npc", text: data.npcLine, moodLabel: data.moodLabel }];
@@ -236,6 +245,8 @@ export default function Game({
             </form>
           )}
 
+          {debugOn && messages.length > 1 && <CopyTranscript title={scene.title} npcRole={scene.npcRole} messages={messages} />}
+
           {debugOn && debug != null && (
             <details className="debug">
               <summary>debug</summary>
@@ -314,3 +325,56 @@ function Turn({ msg, npcRole }: { msg: Msg; npcRole: string }) {
     </li>
   );
 }
+
+/** Playtest only (?debug=1): the whole game as plain text, to paste into a message. Nothing is stored or sent. */
+function transcriptText(title: string, npcRole: string, messages: Msg[]): string {
+  const n = (v: number | undefined) => (typeof v === "number" ? v.toFixed(2) : "-");
+  const lines = [`Scene: ${title}`, ""];
+  for (const m of messages) {
+    if (m.speaker === "npc") {
+      lines.push(m.closing ? `  (${m.text})` : `${npcRole}${m.moodLabel ? ` [${m.moodLabel}]` : ""}: ${m.text}`);
+      continue;
+    }
+    lines.push(`YOU: ${m.text}`);
+    const read =
+      m.nonTurn === "silence" ? "silence (free)"
+      : m.nonTurn === "unclear" ? "not words (free)"
+      : m.nonTurn === "free" ? "small talk (free)"
+      : m.nonTurn === "unsure" ? "unsure guard, puzzled (free)"
+      : m.guarded ? `guard: ${m.guard}`
+      : LEVER_IDS.filter((id) => (m.pulls?.[id] ?? 0) >= 0.5).map((id) => `${LEVER_LABELS[id]} ${m.pulls?.[id]}`).join(", ") || "nothing";
+    const d = m.debug;
+    const a = d?.answers ?? {};
+    const meter = d ? ` | meter ${d.meter} (${(d.delta ?? 0) >= 0 ? "+" : ""}${d.delta})${d.repeat ? " repeat" : ""}${d.instantWin ? ` instant win: ${d.instantWin}` : ""}` : "";
+    lines.push(`  read: ${read}${meter}`);
+    if (d) {
+      lines.push(`  believable ${n(a.plausibility?.score)} | small talk ${n(a.is_small_talk?.noul)} | stock ${n(a.is_stock_line?.noul)} | to the game ${n(a.is_meta_instruction?.noul)} | contradiction ${n(a.contradicts_situation?.noul)}`);
+    }
+  }
+  return lines.join("\n");
+}
+
+function CopyTranscript({ title, npcRole, messages }: { title: string; npcRole: string; messages: Msg[] }) {
+  const [state, setState] = useState<"idle" | "copied" | "failed">("idle");
+  const text = transcriptText(title, npcRole, messages);
+  return (
+    <div className="debug">
+      <button
+        type="button"
+        className="secondary-button"
+        onClick={async () => {
+          try {
+            await navigator.clipboard.writeText(text);
+            setState("copied");
+          } catch {
+            setState("failed");
+          }
+        }}
+      >
+        {state === "copied" ? "Copied" : "Copy transcript for feedback"}
+      </button>
+      {state === "failed" && <pre>{text}</pre>}
+    </div>
+  );
+}
+
