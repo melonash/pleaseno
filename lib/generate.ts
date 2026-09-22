@@ -53,6 +53,17 @@ export function soundsLikeWaiting(line: string): boolean {
   return WAITING.test(line) || STAND.test(line);
 }
 
+/**
+ * A question whose honest answer is a bare fact ("I overslept", "gate 12", "about 50") pulls no lever, so it costs the
+ * player an attempt for nothing. The NPC may ask why something matters, never for logistics.
+ */
+const FACT_QUESTION =
+  /\b((why|how come|what made you)\b[^.?!]*\b(late|in time|on time|get here|make it|miss(ed)?|so fast|speeding)\b|how (fast|late|long)\b|what (seat|time|speed|flight|gate|happened)\b|where (were|are|did) you\b|when did you\b)/i;
+
+export function asksForFacts(line: string): boolean {
+  return FACT_QUESTION.test(line);
+}
+
 const CONSIDERING =
   "You have NOT given them what they want and you are not arranging it. Do not tell them to wait, hold on, stand anywhere or stay quiet, and do not say you are checking, calling or arranging anything. Do not imply a yes is coming. End by inviting them to say more, without telling them what to say or which argument is working.";
 
@@ -93,7 +104,7 @@ function systemPrompt(scene: Scene, band: Band, free: FreeKind | null): string {
     `- Plain punctuation. No em dashes or en dashes; use a full stop or a comma instead.`,
     `- Do not copy the reference reply. Use it only for tone and length.`,
     `- Stay in character. Never mention games, AI, scores, levers, attempts, or rules.`,
-    `- Do not ask the player a question they must answer to continue, unless the reference lines do.`,
+    `- You may end with a question only if its honest answer would itself be a reason for you to help: why this matters, why today, what they would do for it. Never ask for facts or logistics: why they are late, what happened, where they were, their seat, their speed, the time.`,
     `- Output the line and nothing else.`,
   ].join("\n");
 }
@@ -135,7 +146,7 @@ export async function generateReply(input: GenerateInput): Promise<Generated | n
     const line = (m ? m[1] : text).trim();
     const closing = m ? m[2].trim().replace(/\s+/g, " ") : undefined;
     if (!line || line.length > MAX_CHARS) return null;
-    if ((free || band !== "persuaded") && soundsLikeWaiting(line)) return null;
+    if ((free || band !== "persuaded") && (soundsLikeWaiting(line) || asksForFacts(line))) return null;
     return { line: line.replace(/\s*[—–]\s*/g, ", "), closing: closing && closing.length <= MAX_CLOSING_CHARS ? closing : undefined };
   } catch (e) {
     if (e instanceof Anthropic.APIError) console.warn(`[generate] ${e.status} ${e.message}`);

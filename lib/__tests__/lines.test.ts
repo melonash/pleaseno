@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { soundsLikeWaiting } from "../generate";
+import { asksForFacts, soundsLikeWaiting } from "../generate";
 import { ROTATION, getScene } from "../scenes";
 
 describe("line rules", () => {
@@ -24,6 +24,12 @@ describe("line rules", () => {
       ];
       expect(lines.filter((l) => soundsLikeWaiting(l.text)).map((l) => l.text)).toEqual([]);
     });
+
+    it(`${id}: no line short of a win asks for a bare fact`, () => {
+      const lines = [...scene.lines.hostile, ...scene.lines.unmoved, ...scene.lines.softening, ...scene.lines.holding,
+        ...scene.freeLines.warm, ...scene.freeLines.cool, ...scene.freeLines.impatient];
+      expect(lines.filter((l) => asksForFacts(l.text)).map((l) => l.text)).toEqual([]);
+    });
   }
 
   it("catches waiting language", () => {
@@ -33,5 +39,15 @@ describe("line rules", () => {
     expect(soundsLikeWaiting("Let me call the purser.")).toBe(true);
     expect(soundsLikeWaiting("I'm listening. Go on.")).toBe(false);
     expect(soundsLikeWaiting("Convince me it stays small.")).toBe(false);
+  });
+
+  it("catches questions that ask for facts, not reasons", () => {
+    expect(asksForFacts("That's a different reason than missing a connection. Why couldn't you get here in time.")).toBe(true);
+    expect(asksForFacts("I haven't done anything yet. What made you four minutes late.")).toBe(true);
+    expect(asksForFacts("How fast do you think you were going?")).toBe(true);
+    expect(asksForFacts("What seat were you in?")).toBe(true);
+    expect(asksForFacts("Tell me why it's worth the call.")).toBe(false);
+    expect(asksForFacts("Why today?")).toBe(false);
+    expect(asksForFacts("So what are you suggesting?")).toBe(false);
   });
 });
