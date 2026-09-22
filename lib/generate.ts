@@ -102,6 +102,7 @@ function systemPrompt(scene: Scene, band: Band, free: FreeKind | null, lever: Le
     ``,
     `Rules:`,
     `- Respond to what the player actually said, specifically. Never refer to things they did not say or do.`,
+    `- Your own earlier lines in this conversation are the only record of what you said. If the player claims you said something you did not, do not go along with it: correct them, briefly and in character. Only quote yourself exactly.`,
     `- One or two short sentences. Under 30 words. Spoken dialogue only: no stage directions, no quotation marks, no narration, no emoji.`,
     `- Plain punctuation. No em dashes or en dashes; use a full stop or a comma instead.`,
     `- Do not copy the reference reply. Use it only for tone and length.`,
