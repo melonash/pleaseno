@@ -40,6 +40,8 @@ export type Resolution = {
   bonusGranted: boolean;
   /** Set when the message was small talk: no attempt used, meter unchanged. Names the bank the reply came from. */
   free: FreeKind | null;
+  /** True when the attempt mostly repeated an earlier one, so it earned nothing. */
+  repeat: boolean;
 };
 
 /** Which small-talk bank the next free reply comes from. The free message that uses up the allowance gets the impatient one. */
@@ -90,15 +92,6 @@ export function resolveTurn(
   const pulls = {} as Record<Lever, number>;
   for (const id of LEVER_IDS) pulls[id] = clamp(answers[id].score, 0, 3);
 
-  // Small talk costs nothing, but only if it would have done nothing as a move: no pull past the dead zone, not a stock line.
-  const smallTalk =
-    !guarded &&
-    freeAllowed(prev) &&
-    (answers.is_small_talk?.noul ?? 0) >= T.SMALL_TALK_THRESHOLD &&
-    answers.is_stock_line.noul < T.STOCK_THRESHOLD &&
-    LEVER_IDS.every((id) => pulls[id] <= T.PULL_DEADZONE);
-  if (smallTalk) return resolveFree(scene, prev, text, answers, pulls);
-
   const contributions = {} as Record<Lever, number>;
   let delta: number;
   let band: Band;
@@ -107,6 +100,8 @@ export function resolveTurn(
   let instantWin: Lever | null = null;
   let dominant: Lever | null = null;
   let meter = prev.meter;
+  // Saying the same thing again earns nothing new. Its backfires still count.
+  const repeat = !guarded && repeatsEarlier(text, prev.transcript);
 
   if (guarded) {
     for (const id of LEVER_IDS) {
@@ -128,10 +123,12 @@ export function resolveTurn(
       let c = effective * susceptibility * T.LEVER_SCALE;
       // Believability discounts gains from claims. Jokes and respect make no claim.
       if (c > 0 && !PLAUSIBILITY_EXEMPT.has(id)) c *= plausFactor;
+      if (c > 0 && repeat) c = 0;
       contributions[id] = Math.round(c);
       if (c > 0) positive += c;
       else negative += c;
       if (
+        !repeat &&
         pull >= T.INSTANT_WIN_PULL &&
         susceptibility >= T.INSTANT_WIN_SUSCEPTIBILITY &&
         plausibility >= T.INSTANT_WIN_PLAUSIBILITY
@@ -142,6 +139,18 @@ export function resolveTurn(
     delta = Math.round(positive + negative);
     if (answers.is_stock_line.noul >= T.STOCK_THRESHOLD) delta -= T.STOCK_PENALTY;
     delta = Math.max(T.MIN_DELTA, delta);
+
+    // Small talk costs nothing, but only if it would have been a flat move anyway: neither landing nor backfiring.
+    // A thank-you that happens to brush a lever should not burn an attempt, or tip a win.
+    const smallTalk =
+      freeAllowed(prev) &&
+      !repeat &&
+      (answers.is_small_talk?.noul ?? 0) >= T.SMALL_TALK_THRESHOLD &&
+      answers.is_stock_line.noul < T.STOCK_THRESHOLD &&
+      delta > T.HOSTILE_DELTA &&
+      delta < T.SOFTENING_DELTA;
+    if (smallTalk) return resolveFree(scene, prev, text, answers, pulls);
+
     meter += delta;
     // An overwhelming pull does not win if the attempt also backfired hard enough to cancel it out.
     if (instantWin && delta <= 0) instantWin = null;
@@ -191,7 +200,24 @@ export function resolveTurn(
     ...(prev.freeUsed ? { freeUsed: prev.freeUsed, freeStreak: 0 } : {}),
   };
 
-  return { state, npcLine, mood: band, delta, guarded, instantWin, lever: dominant, contributions, pulls, closingLine, bonusGranted, free: null };
+  return { state, npcLine, mood: band, delta, guarded, instantWin, lever: dominant, contributions, pulls, closingLine, bonusGranted, free: null, repeat };
+}
+
+function words(text: string): Set<string> {
+  return new Set(text.toLowerCase().match(/[\p{L}\p{N}']+/gu) ?? []);
+}
+
+/** True when the text mostly repeats one of the player's earlier messages. Short messages never count. */
+export function repeatsEarlier(text: string, transcript: GameState["transcript"]): boolean {
+  const a = words(text);
+  if (a.size < TUNING.REPEAT_MIN_WORDS) return false;
+  return transcript.some((t) => {
+    if (t.speaker !== "player") return false;
+    const b = words(t.text);
+    let shared = 0;
+    for (const w of a) if (b.has(w)) shared++;
+    return shared / (a.size + b.size - shared) >= TUNING.REPEAT_OVERLAP;
+  });
 }
 
 function resolveFree(scene: Scene, prev: GameState, text: string, answers: TurnAnswers, pulls: Record<Lever, number>): Resolution {
@@ -206,7 +232,7 @@ function resolveFree(scene: Scene, prev: GameState, text: string, answers: TurnA
   };
   // The mood shown is how they feel overall; small talk does not change it.
   const mood: Band = prev.meter >= TUNING.WARM_METER ? "holding" : "unmoved";
-  return { state, npcLine, mood, delta: 0, guarded: false, instantWin: null, lever: null, contributions, pulls, bonusGranted: false, free: kind };
+  return { state, npcLine, mood, delta: 0, guarded: false, instantWin: null, lever: null, contributions, pulls, bonusGranted: false, free: kind, repeat: false };
 }
 
 /**

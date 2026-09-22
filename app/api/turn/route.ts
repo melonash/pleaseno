@@ -58,6 +58,7 @@ export async function POST(req: Request) {
         delta: r.delta,
         guarded: r.guarded,
         free: r.free,
+        repeat: r.repeat,
         instantWin: r.instantWin,
         lever: r.lever,
         generated: r.generated,

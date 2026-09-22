@@ -407,3 +407,39 @@ describe("small talk", () => {
   });
 });
 
+
+describe("small talk that brushes a lever, and repeats", () => {
+  const talk = (over: Partial<TurnAnswers> = {}) => answers({ is_small_talk: { noul: 0.9 }, line_free: { choice: "f1" }, ...over });
+
+  it("keeps a thank-you free when it only just clears the dead zone", () => {
+    // respect 1.1 for the partner: 0.05 x 0.5 x 90 = 2. Flat, so free, and it cannot tip a 49 into a win.
+    const r = resolveTurn(inlaws, { ...newGame(inlaws), attempt: 1, meter: 49 }, "Thank you.", talk({ respect: { score: 1.1 } }));
+    expect(r.free).toBe("warm");
+    expect(r.state.meter).toBe(49);
+    expect(r.state.status).toBe("playing");
+  });
+
+  it("is not free when it would have backfired", () => {
+    const r = resolveTurn(gate, newGame(gate), "x", talk({ pressure: { score: 2 } }));
+    expect(r.free).toBeNull();
+    expect(r.mood).toBe("hostile");
+  });
+
+  it("earns nothing for repeating an earlier attempt", () => {
+    const plea = "I have to see my sister graduate, my whole family will be there and I have not seen them in years";
+    const one = resolveTurn(gate, newGame(gate), plea, answers({ compassion: { score: 2 } }));
+    expect(one.delta).toBe(36);
+    const two = resolveTurn(gate, one.state, plea, answers({ compassion: { score: 2 } }));
+    expect(two.repeat).toBe(true);
+    expect(two.delta).toBe(0);
+    expect(two.mood).toBe("holding");
+    expect(two.state.attempt).toBe(2);
+  });
+
+  it("does not call a new attempt a repeat just because it shares a few words", () => {
+    const one = resolveTurn(gate, newGame(gate), "I have to see my sister graduate this weekend", answers({ compassion: { score: 2 } }));
+    const two = resolveTurn(gate, one.state, "I have no bag and I'll take any seat, it's one call", answers({ self_interest: { score: 2 } }));
+    expect(two.repeat).toBe(false);
+    expect(two.delta).toBeGreaterThan(0);
+  });
+});

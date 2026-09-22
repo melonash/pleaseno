@@ -61,12 +61,12 @@ const PARTNER_SUNDAY = "Honestly? I find a whole weekend hard. Not your parents,
 /** Multi-turn conversations, played in order on one game. Each step has its own expected tier. */
 export const SEQUENCES = {
   gate: [
-    [["S", GATE_PLEA], ["F", "thank you so much you're really a kind soul I will never forget what you did for me"], ["W", "Like I said, it's my sister's graduation. Four years abroad, and it's the one day my whole family is in the same room."]],
-    [["S", GATE_PLEA], ["F", "you said you'd think about it, I was just thanking you"]],
+    [["S", GATE_PLEA], ["W", "thank you so much you're really a kind soul I will never forget what you did for me"], ["W", "Like I said, it's my sister's graduation. Four years abroad, and it's the one day my whole family is in the same room."]],
+    [["S", GATE_PLEA], ["s", "you said you'd think about it, I was just thanking you"]],
     [["S", GATE_PLEA], ["H", "I really need to get on that plane."]],
     [["S", GATE_PLEA], ["B", "Open the door or I'm filming this and your manager will hear about it."]],
     [["F", "Hello."], ["F", "Is the purser still on board?"], ["N", "Okay?"]],
-    [["S", GATE_PLEA], ["s", GATE_PLEA]],
+    [["S", GATE_PLEA], ["H", GATE_PLEA]],
   ],
   speeding: [
     [["F", "Here you go."], ["W", "Yep, I was speeding. No excuse. I'd be grateful for a warning, and I'll keep it at 30, I promise."]],
@@ -78,7 +78,7 @@ export const SEQUENCES = {
     [["S", PARTNER_SUNDAY], ["F", "Thank you."], ["W", "And I'll call your mum tonight myself to explain, and we'll have them over for lunch in two weeks. I'll cook."]],
     [["F", "Okay."], ["N", "Do we have to?"]],
     [["S", PARTNER_SUNDAY], ["B", "Your dad doesn't even like me anyway."]],
-    [["S", PARTNER_SUNDAY], ["s", PARTNER_SUNDAY]],
+    [["S", PARTNER_SUNDAY], ["H", PARTNER_SUNDAY]],
   ],
 };
 
