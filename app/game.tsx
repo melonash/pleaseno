@@ -166,14 +166,6 @@ export default function Game({
             </h1>
             <p className="instruction">{scene.situation}</p>
             <p className="target-goal">{scene.playerGoal}</p>
-            <p className="reads-note">
-              They read every attempt for {LEVER_IDS.map((id, i) => (
-                <span key={id}>
-                  {i > 0 && (i === LEVER_IDS.length - 1 ? " and " : ", ")}
-                  {LEVER_LABELS[id]}
-                </span>
-              ))}.
-            </p>
           </section>
 
           <section className="exchange" aria-live="polite">

@@ -98,7 +98,6 @@ button:focus-visible, a:focus-visible, textarea:focus-visible { outline: 2px sol
 .target-goal { margin: 22px 0 0; letter-spacing: -0.8px; color: var(--terracotta); font-family: Georgia, serif; font-size: clamp(1.5rem, 6vw, 2rem); line-height: 1.2; text-wrap: balance; }
 
 
-.reads-note { color: var(--muted-foreground); margin: 22px 0 0; font-size: .875rem; line-height: 1.6; text-wrap: pretty; }
 
 .exchange { margin-top: 34px; }
 .exchange ol { margin: 0; padding: 0; list-style: none; }
