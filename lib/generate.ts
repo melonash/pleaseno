@@ -81,8 +81,10 @@ function outcomeFor(scene: Scene, band: Band, free: FreeKind | null): string {
   return "You have NOT given them what they want. Do not open the door, waive anything, or agree. The scene continues.";
 }
 
-function systemPrompt(scene: Scene, band: Band, free: FreeKind | null): string {
-  const bank = free ? scene.freeLines[free] : scene.lines[band];
+function systemPrompt(scene: Scene, band: Band, free: FreeKind | null, lever: Lever | null): string {
+  // Only lines for the lever the player actually pulled, plus untagged ones. Otherwise the model borrows another
+  // lever's line: a win that never involved money ends with "fold it into your licence".
+  const bank = (free ? scene.freeLines[free] : scene.lines[band]).filter((l) => !l.lever || l.lever === lever);
   const samples = bank.map((l) => `- ${l.text}`).join("\n");
   const feeling = free ? `You ${FREE_DESCRIPTIONS[free]}.` : `How you feel after the player's latest attempt: ${BAND_DESCRIPTIONS[band]}.`;
   const outcome = outcomeFor(scene, band, free);
@@ -130,7 +132,7 @@ export async function generateReply(input: GenerateInput): Promise<Generated | n
     const response = await anthropic().messages.create({
       model: MODEL,
       max_tokens: 200,
-      system: [{ type: "text", text: systemPrompt(scene, band, free), cache_control: { type: "ephemeral" } }],
+      system: [{ type: "text", text: systemPrompt(scene, band, free, lever), cache_control: { type: "ephemeral" } }],
       messages: [...history, { role: "user", content: userTurn }],
     });
     if (response.stop_reason === "refusal") return null;

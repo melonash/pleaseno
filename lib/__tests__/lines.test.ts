@@ -51,3 +51,14 @@ describe("line rules", () => {
     expect(asksForFacts("So what are you suggesting?")).toBe(false);
   });
 });
+
+describe("generated reply references", () => {
+  it("every band keeps at least one untagged line, so a reply always has a reference whatever the lever", () => {
+    for (const id of ROTATION) {
+      const scene = getScene(id)!;
+      for (const [band, lines] of Object.entries(scene.lines)) {
+        expect(lines.some((l) => !l.lever), `${id} ${band}`).toBe(true);
+      }
+    }
+  });
+});
