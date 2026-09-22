@@ -1,5 +1,6 @@
 # local design docs, not for the repo
 ONESHOT-PROMPT.md
+DESIGN-*.md
 CLAUDE.md
 
 # secrets

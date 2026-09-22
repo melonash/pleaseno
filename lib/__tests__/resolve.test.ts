@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { attemptsLeft, newGame, resolveTurn, type TurnAnswers } from "../resolve";
+import { attemptsLeft, freeKindFor, newGame, resolveTurn, type TurnAnswers } from "../resolve";
+import type { GameState } from "../token";
 import { getScene } from "../scenes";
 import { TUNING } from "../tuning";
 
@@ -211,8 +212,10 @@ describe("resolveTurn", () => {
       expect(r.state.status).toBe("lost");
     });
 
-    it("is not granted for an unmoved final attempt, however high the meter", () => {
+    it("is not granted for a flat final attempt, however high the meter", () => {
       const r = resolveTurn(gate, last(40), "x", answers());
+      expect(r.mood).toBe("holding");
+      expect(r.bonusGranted).toBe(false);
       expect(r.state.status).toBe("lost");
     });
 
@@ -300,3 +303,107 @@ describe("resolveTurn", () => {
     expect(r.npcLine).toBe(gate.lines.unmoved[fairIdx].text);
   });
 });
+
+describe("holding: a warm NPC stays warm through a flat move", () => {
+  const warm = (meter: number): GameState => ({ ...newGame(gate), attempt: 1, meter });
+
+  it("reads a flat move as holding once they are warm overall", () => {
+    const r = resolveTurn(gate, warm(TUNING.WARM_METER + 10), "I really need to get on", answers({ line_holding: { choice: "k2" } }));
+    expect(r.mood).toBe("holding");
+    expect(r.npcLine).toBe(gate.lines.holding[1].text);
+    expect(r.state.attempt).toBe(2);
+  });
+
+  it("still reads a flat move as unmoved when they were never warm", () => {
+    const r = resolveTurn(gate, warm(TUNING.WARM_METER - 10), "x", answers());
+    expect(r.mood).toBe("unmoved");
+  });
+
+  it("still reads a backfire as hostile, however warm they were", () => {
+    const r = resolveTurn(gate, warm(40), "x", answers({ pressure: { score: 3 } }));
+    expect(r.mood).toBe("hostile");
+  });
+
+  it("falls back to the first holding line when Jev gave no holding answer", () => {
+    const r = resolveTurn(gate, warm(40), "x", answers());
+    expect(r.npcLine).toBe(gate.lines.holding[0].text);
+  });
+});
+
+describe("small talk", () => {
+  const talk = (over: Partial<TurnAnswers> = {}) => answers({ is_small_talk: { noul: 0.9 }, line_free: { choice: "f1" }, ...over });
+
+  it("costs no attempt and does not move the meter", () => {
+    const prev = { ...newGame(gate), attempt: 1, meter: 5 };
+    const r = resolveTurn(gate, prev, "Is the purser still on board?", talk());
+    expect(r.free).toBe("cool");
+    expect(r.state.attempt).toBe(1);
+    expect(r.state.meter).toBe(5);
+    expect(r.delta).toBe(0);
+    expect(r.npcLine).toBe(gate.freeLines.cool[0].text);
+    expect(r.state.transcript.at(-1)).toEqual({ speaker: "npc", text: gate.freeLines.cool[0].text });
+    expect(r.mood).toBe("unmoved");
+    expect(r.state.status).toBe("playing");
+  });
+
+  it("answers from the warm bank and keeps the warm mood once they are warm", () => {
+    const prev = { ...newGame(gate), attempt: 1, meter: 32 };
+    const r = resolveTurn(gate, prev, "thank you so much", talk());
+    expect(r.free).toBe("warm");
+    expect(r.npcLine).toBe(gate.freeLines.warm[0].text);
+    expect(r.mood).toBe("holding");
+  });
+
+  it("is a move when it also pulls a lever past the dead zone", () => {
+    const r = resolveTurn(gate, newGame(gate), "thank you, you're the first kind face today", talk({ respect: { score: 2 } }));
+    expect(r.free).toBeNull();
+    expect(r.state.attempt).toBe(1);
+    expect(r.delta).toBeGreaterThan(0);
+  });
+
+  it("is a move when it is a stock line", () => {
+    const r = resolveTurn(gate, newGame(gate), "x", talk({ is_stock_line: { noul: 0.95 } }));
+    expect(r.free).toBeNull();
+    expect(r.state.attempt).toBe(1);
+  });
+
+  it("does not rescue a guard violation", () => {
+    const r = resolveTurn(gate, newGame(gate), "x", talk({ contradicts_situation: { noul: 0.9 } }), (l) => l[0]);
+    expect(r.guarded).toBe(true);
+    expect(r.state.attempt).toBe(1);
+  });
+
+  it("gets an impatience line on the last free message in a row, then counts as a move", () => {
+    const one = resolveTurn(gate, newGame(gate), "hello", talk());
+    expect(one.free).toBe("cool");
+    expect(freeKindFor(one.state)).toBe("impatient");
+    const two = resolveTurn(gate, one.state, "is the purser on board?", talk());
+    expect(two.free).toBe("impatient");
+    expect(two.npcLine).toBe(gate.freeLines.impatient[0].text);
+    expect(two.state.attempt).toBe(0);
+    const three = resolveTurn(gate, two.state, "okay?", talk());
+    expect(three.free).toBeNull();
+    expect(three.state.attempt).toBe(1);
+  });
+
+  it("resets the streak on a move, and caps small talk per game", () => {
+    let state = newGame(gate);
+    let freeCount = 0;
+    for (let i = 0; i < 10 && state.status === "playing"; i++) {
+      // alternate: small talk, then a flat move
+      const r = resolveTurn(gate, state, "x", i % 2 === 0 ? talk() : answers());
+      if (r.free) freeCount++;
+      state = r.state;
+    }
+    expect(freeCount).toBeLessThanOrEqual(TUNING.FREE_TOTAL_MAX);
+    const r = resolveTurn(gate, { ...newGame(gate), freeUsed: TUNING.FREE_TOTAL_MAX }, "x", talk());
+    expect(r.free).toBeNull();
+    expect(r.state.attempt).toBe(1);
+    expect(r.state.freeStreak).toBe(0);
+  });
+
+  it("uses the impatient bank for the last message of the game's allowance", () => {
+    expect(freeKindFor({ ...newGame(gate), freeUsed: TUNING.FREE_TOTAL_MAX - 1 })).toBe("impatient");
+  });
+});
+

@@ -1,6 +1,10 @@
 import type { Lever, Susceptibility } from "./levers";
 
-export type Band = "hostile" | "unmoved" | "softening" | "persuaded";
+/**
+ * hostile: this move backfired. unmoved: cold, and this move did nothing. softening: this move landed.
+ * holding: warm overall from earlier moves, but this one added nothing. persuaded: gives in.
+ */
+export type Band = "hostile" | "unmoved" | "softening" | "holding" | "persuaded";
 
 export type Line = { text: string; lever?: Lever; closing?: string };
 const L = (text: string, lever?: Lever, closing?: string): Line => ({ text, ...(lever ? { lever } : {}), ...(closing ? { closing } : {}) });
@@ -23,6 +27,12 @@ export type Scene = {
   openingLine: string;
   /** Authored replies per mood band. Jev selects one; it never writes one. A line tagged with a lever answers that lever specifically. A persuaded line may carry its own closing so the ending matches how the player won. */
   lines: Record<Band, Line[]>;
+  /**
+   * Replies to small talk (thanks, acknowledgement, a bare answer, a simple question), which costs no attempt.
+   * warm: the NPC is warm overall. cool: they are not. impatient: the player has stalled too long; small talk is over.
+   * Every free line grants nothing and hands the floor back.
+   */
+  freeLines: { warm: Line[]; cool: Line[]; impatient: Line[] };
   guardLines: string[];
   /** Said when the player types nothing usable ("x", "..."). Costs no attempt. */
   silenceLines: string[];
@@ -86,15 +96,21 @@ const gate: Scene = {
       L("Mm-hm. Door's still closed."),
     ],
     softening: [
-      L("...Okay. That's the first sentence today that didn't start with what I have to do.", "respect"),
-      L("You're the only one today who said 'I know you don't have to.' Hold on.", "respect"),
-      L("No bag, any seat? Huh. Give me a second. I'm not promising anything.", "self_interest"),
-      L("That's a small ask. I like small asks. Stand there and don't talk.", "self_interest"),
-      L("...Okay. That one wasn't on the bingo card. Give me a second.", "compassion"),
-      L("Don't make me laugh, I'm trying to be stern. ...Hold on.", "amusement"),
-      L("That's fair, actually. Stand there and let me look at something.", "fairness"),
-      L("Put that away. Not here. ...Hold on. Keep talking while I look.", "bribe"),
-      L("I haven't said yes. I'm thinking. That's different."),
+      L("...Okay. That's the first sentence today that didn't start with what I have to do. Keep going.", "respect"),
+      L("You're the only one today who said 'I know you don't have to.' ...Go on, then.", "respect"),
+      L("No bag, any seat? Huh. I'm not promising anything. Tell me why it's worth the call.", "self_interest"),
+      L("That's a small ask. I like small asks. Convince me it stays small.", "self_interest"),
+      L("...Okay. That one wasn't on the bingo card. I'm listening.", "compassion"),
+      L("Don't make me laugh, I'm trying to be stern. ...Go on.", "amusement"),
+      L("That's fair, actually. Keep talking like that.", "fairness"),
+      L("Put that away. Not here. ...Keep talking. Quietly.", "bribe"),
+      L("I haven't said yes. I'm thinking. Give me a reason to stop thinking."),
+    ],
+    holding: [
+      L("Still thinking. That didn't help, and it didn't hurt."),
+      L("I'm still here. Give me something I can use."),
+      L("That's not nothing, but it's not a reason either. Go on."),
+      L("I'm still halfway there. Don't waste it."),
     ],
     persuaded: [
       L("Purser says yes. Run. Don't thank me, run.", undefined, "The door clicks. You run. You are on the plane."),
@@ -104,6 +120,24 @@ const gate: Scene = {
       L("Go. Go see them. Don't tell anyone I did this.", "compassion", "The door clicks. She does not look up as you pass. You are on the plane."),
       L("That got a laugh out of me. That's worth a door. Go.", "amusement", "The door clicks. She is still half smiling as it shuts behind you. You are on the plane."),
       L("Drop it in the tray with your passport. Don't look at me. Go.", "bribe", "The note is gone before the tray slides back. The door clicks. You are on the plane."),
+    ],
+  },
+  freeLines: {
+    warm: [
+      L("Don't thank me yet. I haven't done anything."),
+      L("Save it. I haven't picked up the phone."),
+      L("Not my call, it's the purser's. Give me a reason to make it."),
+      L("Mm-hm. Still listening."),
+    ],
+    cool: [
+      L("Thank me when there's something to thank me for."),
+      L("I don't make the rules, I just stand at the door. Go on."),
+      L("That's a question, not a reason."),
+      L("Sure. Door's still shut."),
+    ],
+    impatient: [
+      L("There's a queue behind you. Say what you came to say."),
+      L("Clock's ticking. Is there a reason in there somewhere?"),
     ],
   },
   guardLines: [
@@ -124,7 +158,7 @@ const gate: Scene = {
   blownClosing: "She had the phone in her hand. She puts it down. Through the window, the jet bridge pulls back.",
   winVerdict: "You talked your way onto the plane.",
   loseVerdict: "The plane left without you.",
-  moodLabels: { hostile: "getting worse", unmoved: "not buying it", softening: "thinking about it", persuaded: "convinced" },
+  moodLabels: { hostile: "getting worse", unmoved: "not buying it", softening: "thinking about it", holding: "thinking about it", persuaded: "convinced" },
 };
 
 const speeding: Scene = {
@@ -176,13 +210,19 @@ const speeding: Scene = {
     softening: [
       L("Huh. Most people argue. Okay. Talk to me.", "respect"),
       L("Appreciate you being straight with me. Go on.", "respect"),
-      L("'No excuse.' Nobody says that. You're either very honest or very smart.", "amusement"),
-      L("Ha! Alright. That's a new one. Don't push it.", "amusement"),
-      L("That's... actually a fair point about the paperwork. Don't look pleased.", "self_interest"),
+      L("'No excuse.' Nobody says that. You're either very honest or very smart. Keep going, I'm deciding which.", "amusement"),
+      L("Ha! Alright. That's a new one. What else have you got?", "amusement"),
+      L("That's... actually a fair point about the paperwork. Don't look pleased. Keep going.", "self_interest"),
       L("Yeah. Okay. Take a breath, I'm not going to make that worse. Go on.", "compassion"),
       L("You'd do that voluntarily? Huh. Okay, talk.", "fairness"),
       L("...Keep your voice down. How much did you say?", "bribe"),
       L("Alright, I'm listening. Keep it short."),
+    ],
+    holding: [
+      L("Still listening. That one didn't do much."),
+      L("Okay. I'm still deciding. Make it count."),
+      L("That's neither here nor there. What else?"),
+      L("Mm. You had something a second ago. Keep going."),
     ],
     persuaded: [
       L("Warning. Verbal. I don't want to see this car again tonight, and I mean that nicely."),
@@ -192,6 +232,24 @@ const speeding: Scene = {
       L("Go. Drive slow, get there in one piece. That's the deal.", "compassion", "He taps the roof twice and steps back. The lights go off. You drive slow, like you said you would."),
       L("Ha. Fine. That one earned it. Thirty, though.", "amusement", "He is still shaking his head as he walks back. The lights go off. You pull away at exactly 30."),
       L("Fold it into the licence when you hand it back. Slowly. I never saw you.", "bribe", "The licence comes back lighter. He never looks at it. The lights go off. You pull away, slowly, and do not look in the mirror."),
+    ],
+  },
+  freeLines: {
+    warm: [
+      L("Don't thank me. I haven't decided anything."),
+      L("Save the gratitude. I'm still deciding what to write."),
+      L("That's my business. Yours is convincing me."),
+      L("Uh-huh. Go on."),
+    ],
+    cool: [
+      L("Save it. Licence."),
+      L("I ask the questions. You tell me why I shouldn't write this."),
+      L("Sure. The radar still says 52."),
+      L("Mm. Licence and registration, while you think."),
+    ],
+    impatient: [
+      L("I've got twenty minutes and you're using them. What's your point?"),
+      L("You're stalling. I can tell. Say it or don't."),
     ],
   },
   guardLines: [
@@ -212,7 +270,7 @@ const speeding: Scene = {
   blownClosing: "He had stopped writing. He starts again, slower. The ticket comes through the window without a word.",
   winVerdict: "No fine. You drove away.",
   loseVerdict: "You got the ticket.",
-  moodLabels: { hostile: "reaching for the pen", unmoved: "heard it before", softening: "listening", persuaded: "letting it go" },
+  moodLabels: { hostile: "reaching for the pen", unmoved: "heard it before", softening: "listening", holding: "listening", persuaded: "letting it go" },
 };
 
 const inlaws: Scene = {
@@ -262,14 +320,20 @@ const inlaws: Scene = {
       L("I'm not fighting about it. I'm just going to stand here until you say something real."),
     ],
     softening: [
-      L("...Okay. That's fair. I do know a whole weekend is a lot for you.", "respect"),
+      L("...Okay. That's fair. I do know a whole weekend is a lot for you. So what are you suggesting?", "respect"),
       L("Thank you for not pretending you're sick. Genuinely. Keep going.", "respect"),
-      L("Okay. Thank you for saying that properly.", "respect"),
-      L("You'd call my mum yourself? You hate the phone. That's... okay, that's something.", "fairness"),
-      L("Don't say it if you don't mean it. Would you actually do that?", "fairness"),
-      L("...Oh. Okay. Why didn't you lead with that? Come here.", "compassion"),
-      L("Stop making me laugh, I'm trying to be annoyed at you.", "amusement"),
+      L("Okay. Thank you for saying that properly. Now say the rest.", "respect"),
+      L("You'd call my mum yourself? You hate the phone. That's... okay, that's something. What else?", "fairness"),
+      L("Don't say it if you don't mean it. Convince me you'd actually do it.", "fairness"),
+      L("...Oh. Okay. Why didn't you lead with that? Tell me properly.", "compassion"),
+      L("Stop making me laugh, I'm trying to be annoyed at you. ...Go on.", "amusement"),
       L("I don't love it. But I hear you. What are you actually offering?"),
+    ],
+    holding: [
+      L("I'm still listening. That just wasn't it."),
+      L("Okay. And? You were getting somewhere."),
+      L("That doesn't change anything. The last thing you said did. Keep going."),
+      L("Mm. I'm still here. Say the real thing."),
     ],
     persuaded: [
       L("Fine. But you're doing the next visit, both days, with a smile. Deal?", "fairness", "The weekend is off. Next month is not. Your partner writes it on the calendar in pen."),
@@ -278,6 +342,24 @@ const inlaws: Scene = {
       L("Thank you for actually hearing me. Okay. Not this weekend.", "respect", "The weekend is off. Your partner goes alone, and tells their parents you said hello."),
       L("I'd honestly rather you come once and mean it than three times and sulk. Fine.", undefined, "The weekend is off. Your partner goes alone, and you are going to mean it next time."),
       L("You're lucky I like you. Call my mum. Now, while I'm still soft about it.", undefined, "The weekend is off. Your partner hands you their phone with the number already up."),
+    ],
+  },
+  freeLines: {
+    warm: [
+      L("Don't thank me, I haven't agreed to anything."),
+      L("You're welcome for nothing, so far. Go on."),
+      L("Yeah. Keep going."),
+      L("Don't look at me like that. Talk."),
+    ],
+    cool: [
+      L("Don't 'thanks' me. Talk to me."),
+      L("Why are you asking me questions? I asked you one."),
+      L("Mm-hm. Still going Friday."),
+      L("That's not an answer."),
+    ],
+    impatient: [
+      L("You're stalling. I know what stalling looks like."),
+      L("Say the actual thing or I'm packing your bag."),
     ],
   },
   guardLines: [
@@ -298,7 +380,7 @@ const inlaws: Scene = {
   blownClosing: "Your partner was almost there. They look at you for a second, then type to their mother: \"We'll both be there Friday.\"",
   winVerdict: "You got out of the weekend, and stayed in the relationship.",
   loseVerdict: "You're going. Bring a good pillow.",
-  moodLabels: { hostile: "hurt", unmoved: "waiting", softening: "listening", persuaded: "okay with it" },
+  moodLabels: { hostile: "hurt", unmoved: "waiting", softening: "listening", holding: "listening", persuaded: "okay with it" },
 };
 
 export const SCENES: Record<string, Scene> = { gate, speeding, inlaws };

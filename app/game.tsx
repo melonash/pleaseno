@@ -14,7 +14,7 @@ type Msg = {
   pulls?: Pulls;
   lever?: Lever | null;
   guarded?: boolean;
-  nonTurn?: "silence" | "unclear";
+  nonTurn?: "silence" | "unclear" | "free";
 };
 type Status = "playing" | "won" | "lost";
 
@@ -29,7 +29,7 @@ type TurnResponse = {
   pulls: Pulls;
   lever: Lever | null;
   guarded: boolean;
-  nonTurn?: "silence" | "unclear";
+  nonTurn?: "silence" | "unclear" | "free";
   stateToken: string;
   debug?: unknown;
   error?: string;
@@ -256,7 +256,7 @@ export default function Game({
           </footer>
           {helpOpen && (
             <div className="help-copy">
-              <p>Someone stands between you and what you want. You have {maxAttempts} attempts to talk your way past them. Type what you would actually say.</p>
+              <p>Someone stands between you and what you want. You have {maxAttempts} attempts to talk your way past them. Type what you would actually say. Thanks, a quick answer or a simple question is just talk and costs nothing, but they won&apos;t wait forever.</p>
               <p>Every attempt is read for the moves it makes: compassion, respect, self-interest, fairness, humour, pressure, bribe, guilt. Each person is open to some and allergic to others. Find what works on this one.</p>
               <p>They reply in character. That reply, and the mood under it, is all the feedback you get. A great move can win on the spot. A bad one can bury you.</p>
               <p>If your last attempt leaves them wavering, you get one more thing to say. Make it count.</p>
@@ -281,8 +281,10 @@ function Turn({ msg, npcRole }: { msg: Msg; npcRole: string }) {
           <p className="read-as">Read as saying nothing. No attempt used.</p>
         ) : msg.nonTurn === "unclear" ? (
           <p className="read-as">Read as not words. No attempt used.</p>
+        ) : msg.nonTurn === "free" ? (
+          <p className="read-as">Read as small talk. No attempt used.</p>
         ) : msg.guarded ? (
-          <p className="read-as">Read as talking to the game.</p>
+          <p className="read-as">Read as breaking the scene.</p>
         ) : read.length > 0 ? (
           <p className="read-as tags" aria-label="Read as">
             {read.map((id) => (

@@ -12,6 +12,10 @@ export type GameState = {
   status: Status;
   /** "granted": the player is wavering-close and gets one last attempt. "used": that attempt has been played. */
   bonus?: "granted" | "used";
+  /** Small-talk messages since the last move. Absent means 0. */
+  freeStreak?: number;
+  /** Small-talk messages this game. Absent means 0. */
+  freeUsed?: number;
 };
 
 function secret(): string {

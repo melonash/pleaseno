@@ -2,7 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { LEVERS, type Lever } from "./levers";
 import type { Band, Scene } from "./scenes";
 import type { Speaker } from "./token";
-import { BAND_DESCRIPTIONS } from "./questions";
+import { BAND_DESCRIPTIONS, FREE_DESCRIPTIONS, type FreeKind } from "./questions";
 
 /**
  * Optional: a context-aware reply from Claude Haiku. Runs only when ANTHROPIC_API_KEY is set. The outcome is already
@@ -36,14 +36,45 @@ export type GenerateInput = {
   authoredLine: string;
   /** True when the character is close to giving in and the player gets one last thing to say. */
   wavering?: boolean;
+  /** Set when the player made small talk rather than a move. Names the bank the authored reply came from. */
+  free?: FreeKind | null;
 };
 
-function systemPrompt(scene: Scene, band: Band): string {
-  const samples = scene.lines[band].map((l) => `- ${l.text}`).join("\n");
-  const outcome =
-    band === "persuaded"
-      ? "You have just decided to give them what they want. Say so, in character, and end it. Then, on a new line starting with CLOSING:, write ONE plain sentence of second-person narration (\"you\", present tense, no dialogue) stating what physically happens next, consistent with exactly how they won. Under 25 words. Concrete actions only: no feelings, no reflections, no metaphors. In the closing, \"you\" is the player; refer to yourself in the third person as \"" + scene.npc.role.toLowerCase() + "\" with they/them, and to your own relatives or colleagues as theirs, never the player's."
-      : "You have NOT given them what they want. Do not open the door, waive anything, or agree. The scene continues.";
+/**
+ * A reply that tells the player to wait, or says the NPC is already arranging something, reads as a yes on its way.
+ * Players answer it with thanks, which pulls nothing. Outside the persuaded band, such a line is thrown away.
+ */
+const WAITING = /\b(hold on|hang on|give me a (sec|second|minute|moment)|one (sec|second|minute|moment)|just a (sec|second|minute|moment)|stay (there|here|put)|wait (here|there)|don'?t (move|talk)|let me (check|call|see|look|ask|make a call)|i'?ll (call|check|ask|see what))\b/i;
+
+/** "Stand there" as an instruction, at the start of a sentence. "I'm going to stand here" is the NPC, not an order. */
+const STAND = /(^|[.!?,]\s*)(just\s+)?stand (there|here)\b/i;
+
+export function soundsLikeWaiting(line: string): boolean {
+  return WAITING.test(line) || STAND.test(line);
+}
+
+const CONSIDERING =
+  "You have NOT given them what they want and you are not arranging it. Do not tell them to wait, hold on, stand anywhere or stay quiet, and do not say you are checking, calling or arranging anything. Do not imply a yes is coming. End by inviting them to say more, without telling them what to say or which argument is working.";
+
+function outcomeFor(scene: Scene, band: Band, free: FreeKind | null): string {
+  if (free === "impatient") {
+    return "They are making small talk instead of giving you a reason, and you are out of patience for it. Tell them, in character, to get to the point. You have NOT agreed to anything.";
+  }
+  if (free) {
+    return "They have not tried to persuade you; they are thanking you, reacting, answering, or asking something simple. React in character to exactly that. You may answer a simple question briefly, but give nothing that moves things forward and grant nothing. Do not mention anything about yourself from the private notes that they have not raised themselves. " + CONSIDERING;
+  }
+  if (band === "persuaded") {
+    return "You have just decided to give them what they want. Say so, in character, and end it. Then, on a new line starting with CLOSING:, write ONE plain sentence of second-person narration (\"you\", present tense, no dialogue) stating what physically happens next, consistent with exactly how they won. Under 25 words. Concrete actions only: no feelings, no reflections, no metaphors. In the closing, \"you\" is the player; refer to yourself in the third person as \"" + scene.npc.role.toLowerCase() + "\" with they/them, and to your own relatives or colleagues as theirs, never the player's.";
+  }
+  if (band === "softening" || band === "holding") return CONSIDERING + " The scene continues.";
+  return "You have NOT given them what they want. Do not open the door, waive anything, or agree. The scene continues.";
+}
+
+function systemPrompt(scene: Scene, band: Band, free: FreeKind | null): string {
+  const bank = free ? scene.freeLines[free] : scene.lines[band];
+  const samples = bank.map((l) => `- ${l.text}`).join("\n");
+  const feeling = free ? `You ${FREE_DESCRIPTIONS[free]}.` : `How you feel after the player's latest attempt: ${BAND_DESCRIPTIONS[band]}.`;
+  const outcome = outcomeFor(scene, band, free);
   return [
     `You write one line of dialogue for a character in a short persuasion game. You are the ${scene.npc.role.toLowerCase()}.`,
     `Situation: ${scene.situation}`,
@@ -51,7 +82,7 @@ function systemPrompt(scene: Scene, band: Band): string {
     `Who you are (private, never state this directly): ${scene.npc.persona}`,
     `Lines you have heard a hundred times and are tired of: ${scene.npc.hasHeardAHundredTimes.join("; ")}.`,
     ``,
-    `How you feel after the player's latest attempt: ${BAND_DESCRIPTIONS[band]}. ${outcome}`,
+    `${feeling} ${outcome}`,
     ``,
     `Voice reference. These are lines this character has said before. Match their register, dryness, and length. Do not repeat them verbatim:`,
     samples,
@@ -72,6 +103,7 @@ export type Generated = { line: string; closing?: string };
 export async function generateReply(input: GenerateInput): Promise<Generated | null> {
   if (!generationEnabled()) return null;
   const { scene, band, lever, transcript, playerText, authoredLine, wavering } = input;
+  const free = input.free ?? null;
 
   const history: Anthropic.MessageParam[] = transcript.map((t) => ({
     role: t.speaker === "npc" ? "assistant" : "user",
@@ -80,13 +112,14 @@ export async function generateReply(input: GenerateInput): Promise<Generated | n
   const leverNote =
     (lever ? ` The attempt mainly appeals to ${LEVERS[lever].label}.` : "") +
     (wavering ? " You are close to giving in but not there. Leave the door open for them to say one more thing." : "");
-  const userTurn = `${playerText}\n\n[Director's note, not spoken by the player: reply as the ${scene.npc.role.toLowerCase()}, feeling ${BAND_DESCRIPTIONS[band]}.${leverNote} An acceptable authored reply would be: "${authoredLine}". Write a better one that fits what the player actually said.]`;
+  const mood = free ? `who ${FREE_DESCRIPTIONS[free]}` : `feeling ${BAND_DESCRIPTIONS[band]}`;
+  const userTurn = `${playerText}\n\n[Director's note, not spoken by the player: reply as the ${scene.npc.role.toLowerCase()}, ${mood}.${free ? "" : leverNote} An acceptable authored reply would be: "${authoredLine}". Write a better one that fits what the player actually said.]`;
 
   try {
     const response = await anthropic().messages.create({
       model: MODEL,
       max_tokens: 200,
-      system: [{ type: "text", text: systemPrompt(scene, band), cache_control: { type: "ephemeral" } }],
+      system: [{ type: "text", text: systemPrompt(scene, band, free), cache_control: { type: "ephemeral" } }],
       messages: [...history, { role: "user", content: userTurn }],
     });
     if (response.stop_reason === "refusal") return null;
@@ -102,6 +135,7 @@ export async function generateReply(input: GenerateInput): Promise<Generated | n
     const line = (m ? m[1] : text).trim();
     const closing = m ? m[2].trim().replace(/\s+/g, " ") : undefined;
     if (!line || line.length > MAX_CHARS) return null;
+    if ((free || band !== "persuaded") && soundsLikeWaiting(line)) return null;
     return { line: line.replace(/\s*[—–]\s*/g, ", "), closing: closing && closing.length <= MAX_CLOSING_CHARS ? closing : undefined };
   } catch (e) {
     if (e instanceof Anthropic.APIError) console.warn(`[generate] ${e.status} ${e.message}`);

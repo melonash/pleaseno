@@ -45,4 +45,13 @@ export const TUNING = {
   HOSTILE_DELTA: -10,
   /** delta >= this reads as softening. */
   SOFTENING_DELTA: 10,
+  /** Meter at or above which the NPC is warm overall: a flat move reads as holding, not unmoved, and small talk gets the warm bank. */
+  WARM_METER: 20,
+
+  /** Noul probability at or above which a message that pulls no lever counts as small talk (no attempt used). */
+  SMALL_TALK_THRESHOLD: 0.6,
+  /** Small-talk messages in a row. The one that reaches this gets an impatience line; the next counts as a move. */
+  FREE_STREAK_MAX: 2,
+  /** Small-talk messages per game. Also bounds the Jev calls a game can make. */
+  FREE_TOTAL_MAX: 4,
 } as const;

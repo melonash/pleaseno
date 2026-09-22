@@ -49,6 +49,7 @@ export async function POST(req: Request) {
       pulls: Object.fromEntries(Object.entries(r.pulls).map(([k, v]) => [k, Math.round(v * 10) / 10])),
       lever: r.lever,
       guarded: r.guarded,
+      ...(r.free ? { nonTurn: "free" } : {}),
       stateToken: encodeState(r.state),
     };
     if (debug) {
@@ -56,6 +57,7 @@ export async function POST(req: Request) {
         meter: r.state.meter,
         delta: r.delta,
         guarded: r.guarded,
+        free: r.free,
         instantWin: r.instantWin,
         lever: r.lever,
         generated: r.generated,

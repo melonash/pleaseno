@@ -1,6 +1,6 @@
 import { getScene, type Scene } from "./scenes";
 import { buildQuestions, buildState } from "./questions";
-import { newGame, resolveTurn, type Resolution, type TurnAnswers } from "./resolve";
+import { freeKindFor, newGame, resolveTurn, type Resolution, type TurnAnswers } from "./resolve";
 import type { GameState } from "./token";
 import { TUNING } from "./tuning";
 import { jev } from "./jev";
@@ -40,7 +40,7 @@ export async function playTurn(
 
   const totalAttempts = TUNING.MAX_ATTEMPTS + (state.bonus === "granted" ? 1 : 0);
   const jevState = buildState(scene, state.transcript, state.attempt + 1, totalAttempts, text);
-  const questions = buildQuestions(scene);
+  const questions = buildQuestions(scene, freeKindFor(state));
   const { answers } = await jev().systemOne({ state: jevState, questions }, { timeout: 20_000 });
 
   if (answers.is_unintelligible.noul >= TUNING.UNCLEAR_THRESHOLD) {
@@ -60,6 +60,7 @@ export async function playTurn(
       playerText: text,
       authoredLine: resolution.npcLine,
       wavering: resolution.bonusGranted,
+      free: resolution.free,
     });
     if (gen) {
       generated = true;

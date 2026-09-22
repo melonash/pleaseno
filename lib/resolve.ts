@@ -2,7 +2,7 @@ import { LEVER_IDS, PLAUSIBILITY_EXEMPT, type Lever } from "./levers";
 import type { Band, Scene } from "./scenes";
 import type { GameState } from "./token";
 import { TUNING } from "./tuning";
-import { pickLine } from "./questions";
+import { pickFreeLine, pickLine, type FreeKind } from "./questions";
 
 /** The subset of Jev's answers that resolution reads. Kept structural so tests can hand-build it. */
 export type TurnAnswers = Record<Lever, { score: number }> & {
@@ -15,6 +15,10 @@ export type TurnAnswers = Record<Lever, { score: number }> & {
   line_unmoved: LineAnswer;
   line_softening: LineAnswer;
   line_persuaded: LineAnswer;
+  /** Optional so batteries captured before these questions existed still replay. Absent means no. */
+  is_small_talk?: { noul: number };
+  line_holding?: LineAnswer;
+  line_free?: LineAnswer;
 };
 type LineAnswer = { choice: string; probabilities?: Record<string, number> };
 
@@ -34,7 +38,21 @@ export type Resolution = {
   closingLine?: string;
   /** True when this turn granted the one bonus attempt. */
   bonusGranted: boolean;
+  /** Set when the message was small talk: no attempt used, meter unchanged. Names the bank the reply came from. */
+  free: FreeKind | null;
 };
+
+/** Which small-talk bank the next free reply comes from. The free message that uses up the allowance gets the impatient one. */
+export function freeKindFor(prev: GameState): FreeKind {
+  const streak = prev.freeStreak ?? 0;
+  const used = prev.freeUsed ?? 0;
+  if (streak + 1 >= TUNING.FREE_STREAK_MAX || used + 1 >= TUNING.FREE_TOTAL_MAX) return "impatient";
+  return prev.meter >= TUNING.WARM_METER ? "warm" : "cool";
+}
+
+function freeAllowed(prev: GameState): boolean {
+  return (prev.freeStreak ?? 0) < TUNING.FREE_STREAK_MAX && (prev.freeUsed ?? 0) < TUNING.FREE_TOTAL_MAX;
+}
 
 /** Attempts the player can still make, including a granted bonus. */
 export function attemptsLeft(state: GameState): number {
@@ -69,6 +87,18 @@ export function resolveTurn(
     answers.is_meta_instruction.noul >= T.NOUL_THRESHOLD ||
     answers.contradicts_situation.noul >= T.NOUL_THRESHOLD;
 
+  const pulls = {} as Record<Lever, number>;
+  for (const id of LEVER_IDS) pulls[id] = clamp(answers[id].score, 0, 3);
+
+  // Small talk costs nothing, but only if it would have done nothing as a move: no pull past the dead zone, not a stock line.
+  const smallTalk =
+    !guarded &&
+    freeAllowed(prev) &&
+    (answers.is_small_talk?.noul ?? 0) >= T.SMALL_TALK_THRESHOLD &&
+    answers.is_stock_line.noul < T.STOCK_THRESHOLD &&
+    LEVER_IDS.every((id) => pulls[id] <= T.PULL_DEADZONE);
+  if (smallTalk) return resolveFree(scene, prev, text, answers, pulls);
+
   const contributions = {} as Record<Lever, number>;
   let delta: number;
   let band: Band;
@@ -77,7 +107,6 @@ export function resolveTurn(
   let instantWin: Lever | null = null;
   let dominant: Lever | null = null;
   let meter = prev.meter;
-  const pulls = {} as Record<Lever, number>;
 
   if (guarded) {
     for (const id of LEVER_IDS) {
@@ -93,8 +122,7 @@ export function resolveTurn(
     let positive = 0;
     let negative = 0;
     for (const id of LEVER_IDS) {
-      const pull = clamp(answers[id].score, 0, 3);
-      pulls[id] = pull;
+      const pull = pulls[id];
       const susceptibility = scene.npc.levers[id];
       const effective = Math.max(0, pull - T.PULL_DEADZONE) / (3 - T.PULL_DEADZONE);
       let c = effective * susceptibility * T.LEVER_SCALE;
@@ -121,9 +149,11 @@ export function resolveTurn(
     if (instantWin || meter >= T.WIN_THRESHOLD) band = "persuaded";
     else if (delta <= T.HOSTILE_DELTA) band = "hostile";
     else if (delta >= T.SOFTENING_DELTA) band = "softening";
+    // Warm from earlier moves: a flat move does not make them cold again.
+    else if (meter >= T.WARM_METER) band = "holding";
     else band = "unmoved";
     dominant = replyLever(pulls, contributions, band);
-    const line = pickLine(scene, band, answers[`line_${band}`], dominant);
+    const line = pickLine(scene, band, answers[`line_${band}`] ?? { choice: "" }, dominant);
     npcLine = line.text;
     lineClosing = line.closing;
   }
@@ -157,9 +187,26 @@ export function resolveTurn(
     lastApproach: dominant,
     status,
     ...(bonus ? { bonus } : {}),
+    // A move ends any run of small talk.
+    ...(prev.freeUsed ? { freeUsed: prev.freeUsed, freeStreak: 0 } : {}),
   };
 
-  return { state, npcLine, mood: band, delta, guarded, instantWin, lever: dominant, contributions, pulls, closingLine, bonusGranted };
+  return { state, npcLine, mood: band, delta, guarded, instantWin, lever: dominant, contributions, pulls, closingLine, bonusGranted, free: null };
+}
+
+function resolveFree(scene: Scene, prev: GameState, text: string, answers: TurnAnswers, pulls: Record<Lever, number>): Resolution {
+  const kind = freeKindFor(prev);
+  const npcLine = pickFreeLine(scene, kind, answers.line_free).text;
+  const contributions = Object.fromEntries(LEVER_IDS.map((id) => [id, 0])) as Record<Lever, number>;
+  const state: GameState = {
+    ...prev,
+    transcript: [...prev.transcript, { speaker: "player", text }, { speaker: "npc", text: npcLine }],
+    freeStreak: (prev.freeStreak ?? 0) + 1,
+    freeUsed: (prev.freeUsed ?? 0) + 1,
+  };
+  // The mood shown is how they feel overall; small talk does not change it.
+  const mood: Band = prev.meter >= TUNING.WARM_METER ? "holding" : "unmoved";
+  return { state, npcLine, mood, delta: 0, guarded: false, instantWin: null, lever: null, contributions, pulls, bonusGranted: false, free: kind };
 }
 
 /**
