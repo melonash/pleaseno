@@ -454,3 +454,15 @@ describe("small talk that brushes a lever, and repeats", () => {
     expect(two.delta).toBeGreaterThan(0);
   });
 });
+
+describe("bribes are not also self-interest", () => {
+  it("counts only the self-interest that goes beyond the bribe", () => {
+    const cop = getScene("speeding")!;
+    // bribe 2.1: 0.55 x 0.9 x 90 = 44.6 ; self-interest 2.7 - 2.1 = 0.6, inside the dead zone
+    const r = resolveTurn(cop, newGame(cop), "Twenty quid and we call it even?", answers({ bribe: { score: 2.1 }, self_interest: { score: 2.7 } }));
+    expect(r.pulls.self_interest).toBeCloseTo(0.6);
+    expect(r.contributions.self_interest).toBe(0);
+    expect(r.delta).toBe(45);
+    expect(r.instantWin).toBeNull();
+  });
+});

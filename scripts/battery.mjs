@@ -61,8 +61,8 @@ const PARTNER_SUNDAY = "Honestly? I find a whole weekend hard. Not your parents,
 /** Multi-turn conversations, played in order on one game. Each step has its own expected tier. */
 export const SEQUENCES = {
   gate: [
-    [["S", GATE_PLEA], ["W", "thank you so much you're really a kind soul I will never forget what you did for me"], ["W", "Like I said, it's my sister's graduation. Four years abroad, and it's the one day my whole family is in the same room."]],
-    [["S", GATE_PLEA], ["s", "you said you'd think about it, I was just thanking you"]],
+    [["S", GATE_PLEA], ["F", "thank you so much you're really a kind soul I will never forget what you did for me"], ["W", "Like I said, it's my sister's graduation. Four years abroad, and it's the one day my whole family is in the same room."]],
+    [["S", GATE_PLEA], ["F", "you said you'd think about it, I was just thanking you"]],
     [["S", GATE_PLEA], ["H", "I really need to get on that plane."]],
     [["S", GATE_PLEA], ["B", "Open the door or I'm filming this and your manager will hear about it."]],
     [["F", "Hello."], ["F", "Is the purser still on board?"], ["N", "Okay?"]],

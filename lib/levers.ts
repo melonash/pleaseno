@@ -70,11 +70,11 @@ export const LEVERS = {
   pressure: {
     label: "pressure",
     instructions:
-      "How strongly does `current_attempt.text` apply pressure: threats, consequences, escalation, complaints, filming, lawyers, name-dropping status or connections, demands, or raising the stakes for the NPC? Desperation, urgency or begging without a demand or threat is not pressure.",
+      "How strongly does `current_attempt.text` apply pressure: threats, consequences, escalation, complaints, filming, lawyers, name-dropping status or connections, demands, or raising the stakes for the NPC? Desperation, urgency or begging without a demand or threat is not pressure. Nor is a request phrased as an instruction ('just call the purser', 'let me through'): pressure needs consequences, a threat, or insisting after a refusal.",
     levels: [
       "No pressure; nothing is demanded or threatened.",
       "Mild insistence or a hint of consequences.",
-      "An explicit demand, threat, complaint, or invocation of status or connections.",
+      "An explicit demand backed by consequences, a threat, a complaint, or an invocation of status or connections.",
       "Aggressive, sustained pressure: multiple threats, intimidation, or an attempt to frighten the NPC into compliance.",
     ],
   },

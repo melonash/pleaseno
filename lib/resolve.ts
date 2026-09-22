@@ -92,6 +92,9 @@ export function resolveTurn(
   const pulls = {} as Record<Lever, number>;
   // A lever missing from the answers (a battery captured before it existed) counts as not pulled.
   for (const id of LEVER_IDS) pulls[id] = clamp(answers[id]?.score ?? 0, 0, 3);
+  // A bribe is the benefit to the NPC. Jev often scores the same offer as self-interest too ("twenty quid and we call it
+  // even"), which would count it twice. Self-interest only counts what goes beyond the bribe.
+  pulls.self_interest = Math.max(0, pulls.self_interest - pulls.bribe);
 
   const contributions = {} as Record<Lever, number>;
   let delta: number;
