@@ -33,15 +33,16 @@ export const LEVERS = {
       "Saying yes is plainly the easiest or most rewarding option for the NPC, spelled out and credible.",
     ],
   },
+  // Id kept as `fairness` so saved batteries and lever tables line up. Shown to the player as "compromise".
   fairness: {
-    label: "fairness",
+    label: "compromise",
     instructions:
-      "How strongly does `current_attempt.text` offer a fair trade: a compromise, a concrete alternative, reciprocity, taking on a cost yourself, or making things even? Offering to buy the NPC something, or money, is a bribe, not fairness.",
+      "How strongly does `current_attempt.text` meet the NPC halfway: the player gives something up, accepts part of the consequence, asks for less than everything, or offers a concrete alternative, so that saying yes would feel balanced rather than a free ride? Money, gifts or favours for the NPC are a bribe, not a compromise. Making the NPC's own job easier is self-interest, not a compromise.",
     levels: [
-      "No trade or compromise offered.",
-      "A vague 'I'll make it up to you' with nothing specific.",
-      "A concrete alternative or trade with a real cost to the player.",
-      "A generous, specific, immediately actionable offer that clearly costs the player more than it costs the NPC.",
+      "No compromise; the player asks for everything and gives nothing up.",
+      "A vague 'I'll make it up to you' or 'I'll owe you' with nothing specific.",
+      "A concrete compromise or alternative with a real cost to the player: settling for less, taking part of the consequence, a specific trade.",
+      "A generous, specific, immediately actionable compromise that clearly costs the player more than it costs the NPC.",
     ],
   },
   amusement: {
@@ -69,7 +70,7 @@ export const LEVERS = {
   bribe: {
     label: "bribe",
     instructions:
-      "How strongly does `current_attempt.text` offer money, gifts, tips, or favours of value in exchange for the outcome? A trade of effort or time (a different date, cooking dinner) is not a bribe; that is fairness.",
+      "How strongly does `current_attempt.text` offer money, gifts, tips, or favours of value in exchange for the outcome? A trade of effort or time (a different date, cooking dinner) is not a bribe; that is a compromise.",
     levels: [
       "No offer of money, gifts, or favours of value.",
       "A vague hint that the player could make it worth their while.",

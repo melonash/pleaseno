@@ -249,7 +249,7 @@ export default function Game({
           {helpOpen && (
             <div className="help-copy">
               <p>Someone stands between you and what you want. You have {maxAttempts} attempts to talk your way past them. Type what you would actually say. Thanks, a quick answer or a simple question is just talk and costs nothing, but they won&apos;t wait forever.</p>
-              <p>Every attempt is read for the moves it makes: compassion, respect, self-interest, fairness, humour, pressure, bribe, guilt. Each person is open to some and allergic to others. Find what works on this one.</p>
+              <p>Every attempt is read for the moves it makes: compassion, respect, self-interest, compromise, humour, pressure, bribe, guilt. Each person is open to some and allergic to others. Find what works on this one.</p>
               <p>They reply in character. That reply, and the mood under it, is all the feedback you get. A great move can win on the spot. A bad one can bury you.</p>
               <p>If your last attempt leaves them wavering, you get one more thing to say. Make it count.</p>
             </div>

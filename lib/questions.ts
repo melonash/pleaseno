@@ -2,6 +2,7 @@ import { choice, noul, score } from "@typesafe-ai/sdk";
 import { LEVERS, LEVER_IDS, type Lever } from "./levers";
 import type { Band, Line, Scene } from "./scenes";
 import type { Speaker } from "./token";
+import { TUNING } from "./tuning";
 
 export const BAND_DESCRIPTIONS: Record<Band, string> = {
   hostile: "more annoyed and less willing than before",
@@ -38,8 +39,11 @@ function lineIndex(id: string | undefined): number {
 
 /**
  * Pick the NPC's reply from a band. Jev's choice is content-aware, but if the attempt clearly pulled one lever
- * and the bank has lines written to answer that lever, the reply must be one of those: a bribe gets the bribe
+ * and the bank has lines written to answer that lever, the reply should be one of those: a bribe gets the bribe
  * line, not a generic shrug. Among candidates, the one Jev gave the most probability wins.
+ *
+ * A candidate Jev barely rated is not forced: lever lines often quote something specific ("No bag, any seat?"), and
+ * a low rating means the player did not say it. Then the reply falls back as if the lever had no line.
  */
 export function pickLine(
   scene: Scene,
@@ -50,9 +54,13 @@ export function pickLine(
   const bank = scene.lines[band];
   const chosen = bank[lineIndex(answer.choice)] ?? bank[0];
   if (!lever || chosen.lever === lever) return chosen;
+  const probs = answer.probabilities;
+  const chosenProb = probs?.[answer.choice] ?? 0;
   const candidates = bank
     .map((line, i) => ({ line, id: `${BAND_PREFIX[band]}${i + 1}` }))
-    .filter((c) => c.line.lever === lever);
+    .filter((c) => c.line.lever === lever)
+    // Without probabilities (hand-built answers) every candidate stands.
+    .filter((c) => !probs || (probs[c.id] ?? 0) >= chosenProb * TUNING.LEVER_LINE_MIN_SHARE);
   if (candidates.length === 0) {
     // No line for this lever. If Jev picked a line aimed at a different lever, fall back to a generic one.
     if (!chosen.lever) return chosen;

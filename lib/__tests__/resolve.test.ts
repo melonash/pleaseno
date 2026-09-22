@@ -291,16 +291,26 @@ describe("resolveTurn", () => {
     expect(r.npcLine).toBe(gate.lines.unmoved[1].text);
   });
 
-  it("prefers a generic line over one aimed at a different lever when no line matches", () => {
-    // fairness pulled at the gate, unmoved band. Jev picked u1 (compassion line). u2 is generic.
+  it("forces the pulled lever's line when Jev rated it as fitting", () => {
+    // fairness pulled at the gate, unmoved band. Jev picked u1 (a compassion line) but also rated the fairness line.
+    const fairIdx = gate.lines.unmoved.findIndex((l) => l.lever === "fairness");
     const r = resolveTurn(gate, newGame(gate), "x", answers({
       fairness: { score: 1 },
-      line_unmoved: { choice: "u1", probabilities: { u1: 0.4, u2: 0.3, u4: 0.1 } },
+      line_unmoved: { choice: "u1", probabilities: { u1: 0.4, u2: 0.3, [`u${fairIdx + 1}`]: 0.2 } },
     }));
     expect(r.lever).toBe("fairness");
-    // the gate has a fairness line in unmoved, so that wins
-    const fairIdx = gate.lines.unmoved.findIndex((l) => l.lever === "fairness");
     expect(r.npcLine).toBe(gate.lines.unmoved[fairIdx].text);
+  });
+
+  it("does not force a lever's line Jev barely rated; falls back to a generic one", () => {
+    // Same, but Jev gave the fairness line almost nothing: the player did not say what it quotes. u2 is generic.
+    const fairIdx = gate.lines.unmoved.findIndex((l) => l.lever === "fairness");
+    const r = resolveTurn(gate, newGame(gate), "x", answers({
+      fairness: { score: 1 },
+      line_unmoved: { choice: "u1", probabilities: { u1: 0.4, u2: 0.3, [`u${fairIdx + 1}`]: 0.02 } },
+    }));
+    expect(r.lever).toBe("fairness");
+    expect(gate.lines.unmoved.find((l) => l.text === r.npcLine)?.lever).toBeUndefined();
   });
 });
 

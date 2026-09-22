@@ -40,6 +40,8 @@ export const TUNING = {
   LEVER_REPLY_MIN_PULL: 1.0,
   /** A lever that explains the mood beats the strongest pull only if pulled within this margin of it. */
   LEVER_REPLY_MARGIN: 0.5,
+  /** A lever's line is forced over Jev's pick only if Jev gave it at least this share of its pick's probability. */
+  LEVER_LINE_MIN_SHARE: 0.25,
 
   /** delta <= this reads as hostile. */
   HOSTILE_DELTA: -10,

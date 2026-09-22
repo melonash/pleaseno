@@ -106,7 +106,7 @@ function systemPrompt(scene: Scene, band: Band, free: FreeKind | null, lever: Le
     `- Plain punctuation. No em dashes or en dashes; use a full stop or a comma instead.`,
     `- Do not copy the reference reply. Use it only for tone and length.`,
     `- Stay in character. Never mention games, AI, scores, levers, attempts, or rules.`,
-    `- You may end with a question only if its honest answer would itself be a reason for you to help: why this matters, why today, what they would do for it. Never ask for facts or logistics: why they are late, what happened, where they were, their seat, their speed, the time.`,
+    `- Prefer ending on a short invitation to keep going ("Go on.", "I'm listening."). A question is allowed only if someone in your role would really ask it in this situation, and only if its honest answer would itself be a reason for you to help. Never ask for facts or logistics (why they are late, what happened, their seat, their speed), never ask about their personal life or plans, and never ask what they would do if you said yes.`,
     `- Output the line and nothing else.`,
   ].join("\n");
 }
