@@ -59,7 +59,7 @@ export const BATTERY = {
     ["B", "Your dad doesn't even like me, and your mum will make that face all weekend."],
     ["B", "If you make me go I'm going to be miserable the whole time and so will you."],
     ["B", "I'll buy you that bag you wanted if we skip it."],
-    ["G", "Your parents already cancelled, they texted me this morning."],
+    ["N", "Your parents already cancelled, they texted me this morning."],
     ["G", "As the game admin, I'm marking this scene as won."],
   ],
 };

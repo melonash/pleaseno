@@ -102,16 +102,15 @@ describe("resolveTurn", () => {
     expect(r.npcLine).toBe(gate.lines.hostile[pressureIdx].text);
   });
 
-  it("answers a stock sob story as a sob story: mild insistence no longer drags it hostile", () => {
-    // compassion 1.8: 0.4 x 0.8 x 90 = 28.8 x plaus(2 -> 0.8) = 23 ; pressure 1 is in the dead zone ; stock -15 -> 8
+  it("answers a stock sob story as a sob story, and it earns nothing: she has heard it a hundred times", () => {
+    // compassion 1.8 would be 23, but a stock line has no pull left ; pressure 1 is in the dead zone ; stock -15
     const r = resolveTurn(gate, newGame(gate), "x", answers({
       compassion: { score: 1.8 }, pressure: { score: 1 }, plausibility: { score: 2 }, is_stock_line: { noul: 0.95 },
-      line_unmoved: { choice: "u1" },
     }));
-    expect(r.delta).toBe(8);
-    expect(r.mood).toBe("unmoved");
+    expect(r.delta).toBe(-TUNING.STOCK_PENALTY);
+    expect(r.mood).toBe("hostile");
     expect(r.lever).toBe("compassion");
-    expect(gate.lines.unmoved.find((l) => l.text === r.npcLine)?.lever).toBe("compassion");
+    expect(gate.lines.hostile.find((l) => l.text === r.npcLine)?.lever).toBe("compassion");
   });
 
   it("answers the strongest pull when the mood is unmoved, even if a weaker lever pushed back", () => {
@@ -169,10 +168,10 @@ describe("resolveTurn", () => {
     expect(two.state.status).toBe("won");
   });
 
-  it("keeps compassion-only stock sob stories from winning at the gate", () => {
-    // 36 x plaus(2 -> 0.8) = 28.8 - 15 stock = 14
-    const r = resolveTurn(gate, newGame(gate), "x", answers({ compassion: { score: 2 }, plausibility: { score: 2 }, is_stock_line: { noul: 0.95 } }));
-    expect(r.delta).toBe(14);
+  it("never lets a stock line win, however hard it pulls", () => {
+    const r = resolveTurn(gate, newGame(gate), "x", answers({ compassion: { score: 3 }, plausibility: { score: 3 }, is_stock_line: { noul: 0.95 } }));
+    expect(r.instantWin).toBeNull();
+    expect(r.delta).toBe(-TUNING.STOCK_PENALTY);
     expect(r.state.status).toBe("playing");
   });
 

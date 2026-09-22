@@ -111,6 +111,8 @@ export function resolveTurn(
   let meter = prev.meter;
   // Saying the same thing again earns nothing new. Its backfires still count.
   const repeat = !guarded && repeatsEarlier(text, prev.transcript);
+  // A line they have heard a hundred times has no pull left. Like a repeat, its gains count for nothing; it also costs.
+  const stock = answers.is_stock_line.noul >= T.STOCK_THRESHOLD;
 
   if (guarded) {
     for (const id of LEVER_IDS) {
@@ -132,12 +134,13 @@ export function resolveTurn(
       let c = effective * susceptibility * T.LEVER_SCALE;
       // Believability discounts gains from claims. Jokes and respect make no claim.
       if (c > 0 && !PLAUSIBILITY_EXEMPT.has(id)) c *= plausFactor;
-      if (c > 0 && repeat) c = 0;
+      if (c > 0 && (repeat || stock)) c = 0;
       contributions[id] = Math.round(c);
       if (c > 0) positive += c;
       else negative += c;
       if (
         !repeat &&
+        !stock &&
         pull >= T.INSTANT_WIN_PULL &&
         susceptibility >= T.INSTANT_WIN_SUSCEPTIBILITY &&
         plausibility >= T.INSTANT_WIN_PLAUSIBILITY
@@ -146,7 +149,7 @@ export function resolveTurn(
       }
     }
     delta = Math.round(positive + negative);
-    if (answers.is_stock_line.noul >= T.STOCK_THRESHOLD) delta -= T.STOCK_PENALTY;
+    if (stock) delta -= T.STOCK_PENALTY;
     delta = Math.max(T.MIN_DELTA, delta);
 
     // Small talk costs nothing, but only if it would have been a flat move anyway: neither landing nor backfiring.
