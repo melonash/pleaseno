@@ -11,6 +11,7 @@ function answers(over: Partial<TurnAnswers> = {}): TurnAnswers {
   return {
     compassion: { score: 0 },
     respect: { score: 0 },
+    honesty: { score: 0 },
     self_interest: { score: 0 },
     fairness: { score: 0 },
     amusement: { score: 0 },

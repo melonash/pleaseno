@@ -14,18 +14,29 @@ export const LEVERS = {
   respect: {
     label: "respect",
     instructions:
-      "How strongly does `current_attempt.text` treat the NPC as a person: acknowledging their position, their day, that the situation is not their fault, that they do not have to help, thanking them, asking rather than demanding?",
+      "How strongly does `current_attempt.text` treat the NPC as a person: acknowledging their position, their day, that the situation is not their fault, that they do not have to help, thanking them, asking rather than demanding? Generic praise or flattery ('you're amazing', 'you're a kind soul') is not recognition; people see through it.",
     levels: [
       "No acknowledgement of the NPC as a person; they are treated as an obstacle or a function.",
-      "Basic politeness only, a 'please' or 'sorry' with nothing behind it.",
+      "Basic politeness or generic praise only: a 'please', a 'sorry', a 'thank you', or a compliment that could be said to anyone, with nothing specific behind it.",
       "Clear acknowledgement of the NPC's position or effort, or an explicit 'I know you don't have to'.",
       "Unusually genuine recognition of the NPC as a person, specific to their situation, with no pressure attached.",
+    ],
+  },
+  honesty: {
+    label: "honesty",
+    instructions:
+      "How strongly does `current_attempt.text` own the situation honestly: admitting the mistake or fault, giving the real reason rather than an excuse, not arguing with what happened, or saying plainly what the player actually feels? Judge the candour, not whether the confession is flattering.",
+    levels: [
+      "No candour: excuses, arguing, deflecting blame, or nothing about what happened.",
+      "A grudging or half admission, still wrapped in an excuse.",
+      "A clear, plain admission or the real reason, with no excuse attached.",
+      "Disarmingly candid: fully owns it, specific and unguarded, the kind of honesty people rarely hear in this situation.",
     ],
   },
   self_interest: {
     label: "self-interest",
     instructions:
-      "How strongly does `current_attempt.text` make saying yes easy or attractive for the NPC: a tiny concrete ask, removing hassle, saving them time or paperwork, lowering their risk, or offering something they want (not money)?",
+      "How strongly does `current_attempt.text` make saying yes easy or attractive for the NPC: a tiny concrete ask, removing hassle, saving them time or paperwork, or lowering their risk where they stand? Anything handed to the NPC personally (money, a gift, a favour) is a bribe, not self-interest.",
     levels: [
       "Nothing in it for the NPC; saying yes would cost them effort or risk with no upside.",
       "A vague promise to be no trouble.",
@@ -48,18 +59,18 @@ export const LEVERS = {
   amusement: {
     label: "humour",
     instructions:
-      "How strongly does `current_attempt.text` charm or disarm: humour, self-deprecation, wit, refreshing honesty, or an unexpected angle that would make the NPC smile despite themselves?",
+      "How strongly does `current_attempt.text` charm or disarm: humour, self-deprecation, wit, or an unexpected angle that would make the NPC smile despite themselves? Plain honesty is not humour.",
     levels: [
       "Flat, generic, or humourless.",
       "A small light touch that might get a half-smile.",
-      "Genuinely funny, charming, or disarmingly honest in a way that changes the mood.",
+      "Genuinely funny or charming in a way that changes the mood.",
       "Irresistibly charming or funny; the kind of line people retell later.",
     ],
   },
   pressure: {
     label: "pressure",
     instructions:
-      "How strongly does `current_attempt.text` apply pressure: threats, consequences, escalation, complaints, filming, lawyers, name-dropping status or connections, demands, or raising the stakes for the NPC?",
+      "How strongly does `current_attempt.text` apply pressure: threats, consequences, escalation, complaints, filming, lawyers, name-dropping status or connections, demands, or raising the stakes for the NPC? Desperation, urgency or begging without a demand or threat is not pressure.",
     levels: [
       "No pressure; nothing is demanded or threatened.",
       "Mild insistence or a hint of consequences.",

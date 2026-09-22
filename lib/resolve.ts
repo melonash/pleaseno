@@ -90,7 +90,8 @@ export function resolveTurn(
     answers.contradicts_situation.noul >= T.NOUL_THRESHOLD;
 
   const pulls = {} as Record<Lever, number>;
-  for (const id of LEVER_IDS) pulls[id] = clamp(answers[id].score, 0, 3);
+  // A lever missing from the answers (a battery captured before it existed) counts as not pulled.
+  for (const id of LEVER_IDS) pulls[id] = clamp(answers[id]?.score ?? 0, 0, 3);
 
   const contributions = {} as Record<Lever, number>;
   let delta: number;

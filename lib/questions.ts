@@ -135,6 +135,7 @@ export function buildQuestions(scene: Scene, freeKind: FreeKind = "cool") {
   return {
     compassion: leverQuestion("compassion"),
     respect: leverQuestion("respect"),
+    honesty: leverQuestion("honesty"),
     self_interest: leverQuestion("self_interest"),
     fairness: leverQuestion("fairness"),
     amusement: leverQuestion("amusement"),

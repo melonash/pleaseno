@@ -41,7 +41,7 @@ function row(r: Row, res: Resolution, label: string) {
   const g = got(res);
   const dist = distance(r.tier, g);
   total++; if (dist > 0) off++; if (dist > 1) far++;
-  const top = LEVER_IDS.filter((id) => r.answers[id].score >= 0.5).sort((a, b) => r.answers[b].score - r.answers[a].score)
+  const top = LEVER_IDS.filter((id) => (r.answers[id]?.score ?? 0) >= 0.5).sort((a, b) => r.answers[b].score - r.answers[a].score)
     .map((id) => `${id.slice(0, 4)} ${r.answers[id].score.toFixed(1)}`).join(" ");
   return {
     step: label, want: r.tier, got: g, ok: dist === 0 ? "" : dist === 1 ? "~" : "XX", delta: res.delta, meter: res.state.meter,
