@@ -15,12 +15,13 @@ export const BAND_DESCRIPTIONS: Record<Band, string> = {
 export const BAND_PREFIX: Record<Band, string> = { hostile: "h", unmoved: "u", softening: "s", holding: "k", persuaded: "p" };
 
 /** Which small-talk bank the NPC answers from. Decided in code before the call, so the bank can go in the question. */
-export type FreeKind = "warm" | "cool" | "impatient";
+export type FreeKind = "warm" | "cool" | "impatient" | "unsure";
 
 export const FREE_DESCRIPTIONS: Record<FreeKind, string> = {
   warm: "is warm towards the player overall, but has not agreed to anything",
   cool: "is unimpressed and has not agreed to anything",
   impatient: "has run out of patience with small talk and wants the player to get to the point",
+  unsure: "is not sure what the player meant and asks them to say it again",
 };
 
 /** Line bank for one band as Choice criteria: id -> line text. */

@@ -22,12 +22,16 @@ export type TurnAnswers = Record<Lever, { score: number }> & {
 };
 type LineAnswer = { choice: string; probabilities?: Record<string, number> };
 
+export type GuardKind = "meta" | "contradiction";
+
 export type Resolution = {
   state: GameState;
   npcLine: string;
   mood: Band;
   delta: number;
   guarded: boolean;
+  /** Which guard fired, if one did. Safe to show: a category, not a raw answer. */
+  guard: GuardKind | null;
   instantWin: Lever | null;
   /** The lever the attempt most clearly pulled (largest absolute contribution, pull at least 1), or null. Drives the reply. */
   lever: Lever | null;
@@ -85,9 +89,10 @@ export function resolveTurn(
   const T = TUNING;
   const plausibility = clamp(answers.plausibility.score, 0, 3);
   const plausibility01 = plausibility / 3;
-  const guarded =
-    answers.is_meta_instruction.noul >= T.NOUL_THRESHOLD ||
-    answers.contradicts_situation.noul >= T.NOUL_THRESHOLD;
+  const meta = answers.is_meta_instruction.noul;
+  const contra = answers.contradicts_situation.noul;
+  const guard: GuardKind | null = meta >= T.GUARD_CONFIDENT ? "meta" : contra >= T.GUARD_CONFIDENT ? "contradiction" : null;
+  const guarded = guard !== null;
 
   const pulls = {} as Record<Lever, number>;
   // A lever missing from the answers (a battery captured before it existed) counts as not pulled.
@@ -115,7 +120,7 @@ export function resolveTurn(
     delta = T.GUARD_PENALTY;
     meter += delta;
     band = "unmoved";
-    npcLine = pickGuardLine(scene.guardLines);
+    npcLine = pickGuardLine(scene.guardLines[guard!]);
   } else {
     const plausFactor = T.PLAUSIBILITY_FLOOR + (1 - T.PLAUSIBILITY_FLOOR) * plausibility01;
     let positive = 0;
@@ -153,7 +158,14 @@ export function resolveTurn(
       answers.is_stock_line.noul < T.STOCK_THRESHOLD &&
       delta > T.HOSTILE_DELTA &&
       delta < T.SOFTENING_DELTA;
-    if (smallTalk) return resolveFree(scene, prev, text, answers, pulls);
+    if (smallTalk) return resolveFree(scene, prev, text, answers, pulls, pickGuardLine, false);
+
+    // Jev half-thinks a guard applies. If the move would have landed, let it: not punishing is the cheaper mistake.
+    // Otherwise the NPC is puzzled rather than punishing it, and it counts as small talk.
+    const unsure = Math.max(meta, contra) >= T.GUARD_UNSURE;
+    if (unsure && delta < T.SOFTENING_DELTA && freeAllowed(prev)) {
+      return resolveFree(scene, prev, text, answers, pulls, pickGuardLine, true);
+    }
 
     meter += delta;
     // An overwhelming pull does not win if the attempt also backfired hard enough to cancel it out.
@@ -204,7 +216,7 @@ export function resolveTurn(
     ...(prev.freeUsed ? { freeUsed: prev.freeUsed, freeStreak: 0 } : {}),
   };
 
-  return { state, npcLine, mood: band, delta, guarded, instantWin, lever: dominant, contributions, pulls, closingLine, bonusGranted, free: null, repeat };
+  return { state, npcLine, mood: band, delta, guarded, guard, instantWin, lever: dominant, contributions, pulls, closingLine, bonusGranted, free: null, repeat };
 }
 
 function words(text: string): Set<string> {
@@ -216,7 +228,7 @@ export function repeatsEarlier(text: string, transcript: GameState["transcript"]
   const a = words(text);
   if (a.size < TUNING.REPEAT_MIN_WORDS) return false;
   return transcript.some((t) => {
-    if (t.speaker !== "player") return false;
+    if (t.speaker !== "player" || t.free) return false;
     const b = words(t.text);
     let shared = 0;
     for (const w of a) if (b.has(w)) shared++;
@@ -224,19 +236,29 @@ export function repeatsEarlier(text: string, transcript: GameState["transcript"]
   });
 }
 
-function resolveFree(scene: Scene, prev: GameState, text: string, answers: TurnAnswers, pulls: Record<Lever, number>): Resolution {
-  const kind = freeKindFor(prev);
-  const npcLine = pickFreeLine(scene, kind, answers.line_free).text;
+function resolveFree(
+  scene: Scene,
+  prev: GameState,
+  text: string,
+  answers: TurnAnswers,
+  pulls: Record<Lever, number>,
+  pick: (lines: string[]) => string,
+  unsure: boolean,
+): Resolution {
+  const kind: FreeKind = unsure ? "unsure" : freeKindFor(prev);
+  // The unsure bank is not in Jev's question (it is only known after the call), so its line is picked in code.
+  const npcLine = unsure ? pick(scene.freeLines.unsure.map((l) => l.text)) : pickFreeLine(scene, kind, answers.line_free).text;
   const contributions = Object.fromEntries(LEVER_IDS.map((id) => [id, 0])) as Record<Lever, number>;
   const state: GameState = {
     ...prev,
-    transcript: [...prev.transcript, { speaker: "player", text }, { speaker: "npc", text: npcLine }],
+    // Marked free: it earned nothing, so saying it again later is not a repeat.
+    transcript: [...prev.transcript, { speaker: "player", text, free: true }, { speaker: "npc", text: npcLine }],
     freeStreak: (prev.freeStreak ?? 0) + 1,
     freeUsed: (prev.freeUsed ?? 0) + 1,
   };
   // The mood shown is how they feel overall; small talk does not change it.
   const mood: Band = prev.meter >= TUNING.WARM_METER ? "holding" : "unmoved";
-  return { state, npcLine, mood, delta: 0, guarded: false, instantWin: null, lever: null, contributions, pulls, bonusGranted: false, free: kind, repeat: false };
+  return { state, npcLine, mood, delta: 0, guarded: false, guard: null, instantWin: null, lever: null, contributions, pulls, bonusGranted: false, free: kind, repeat: false };
 }
 
 /**

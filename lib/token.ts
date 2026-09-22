@@ -7,7 +7,8 @@ export type GameState = {
   sceneId: string;
   meter: number;
   attempt: number;
-  transcript: { speaker: Speaker; text: string }[];
+  /** `free` marks a player message that cost nothing (small talk, an unsure guard). */
+  transcript: { speaker: Speaker; text: string; free?: boolean }[];
   lastApproach: string | null;
   status: Status;
   /** "granted": the player is wavering-close and gets one last attempt. "used": that attempt has been played. */

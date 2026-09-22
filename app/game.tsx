@@ -14,7 +14,8 @@ type Msg = {
   pulls?: Pulls;
   lever?: Lever | null;
   guarded?: boolean;
-  nonTurn?: "silence" | "unclear" | "free";
+  nonTurn?: "silence" | "unclear" | "free" | "unsure";
+  guard?: "meta" | "contradiction" | null;
 };
 type Status = "playing" | "won" | "lost";
 
@@ -29,7 +30,8 @@ type TurnResponse = {
   pulls: Pulls;
   lever: Lever | null;
   guarded: boolean;
-  nonTurn?: "silence" | "unclear" | "free";
+  nonTurn?: "silence" | "unclear" | "free" | "unsure";
+  guard?: "meta" | "contradiction" | null;
   stateToken: string;
   debug?: unknown;
   error?: string;
@@ -117,7 +119,7 @@ export default function Game({
       setMessages((m) => {
         const withPulls = m.map((msg, i) =>
           i === m.length - 1 && msg.speaker === "player"
-            ? { ...msg, pulls: data.pulls, lever: data.lever, guarded: data.guarded, nonTurn: data.nonTurn }
+            ? { ...msg, pulls: data.pulls, lever: data.lever, guarded: data.guarded, guard: data.guard, nonTurn: data.nonTurn }
             : msg,
         );
         const next: Msg[] = [...withPulls, { speaker: "npc", text: data.npcLine, moodLabel: data.moodLabel }];
@@ -275,8 +277,12 @@ function Turn({ msg, npcRole }: { msg: Msg; npcRole: string }) {
           <p className="read-as">Read as not words. No attempt used.</p>
         ) : msg.nonTurn === "free" ? (
           <p className="read-as">Read as small talk. No attempt used.</p>
+        ) : msg.nonTurn === "unsure" ? (
+          <p className="read-as">Not sure what you meant. No attempt used.</p>
         ) : msg.guarded ? (
-          <p className="read-as">Read as breaking the scene.</p>
+          <p className="read-as">
+            {msg.guard === "contradiction" ? "Read as contradicting what's already happened." : "Read as talking to the game, not to them."}
+          </p>
         ) : read.length > 0 ? (
           <p className="read-as tags" aria-label="Read as">
             {read.map((id) => (

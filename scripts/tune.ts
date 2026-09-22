@@ -12,7 +12,7 @@ import { newGame, resolveTurn, type Resolution, type TurnAnswers } from "../lib/
 import { getScene } from "../lib/scenes";
 import { TUNING } from "../lib/tuning";
 
-type Tier = "W" | "S" | "s" | "N" | "B" | "F" | "H";
+type Tier = "W" | "S" | "s" | "N" | "B" | "F" | "H" | "G" | "U";
 type Row = { tier: Tier; text: string; answers: TurnAnswers };
 const data = JSON.parse(readFileSync(new URL("./battery.answers.json", import.meta.url), "utf8")) as Record<string, Row[]>;
 const seqPath = new URL("./battery.sequences.json", import.meta.url);
@@ -20,8 +20,9 @@ const sequences = existsSync(seqPath) ? (JSON.parse(readFileSync(seqPath, "utf8"
 
 /** What tier a turn actually lands in. */
 function got(res: Resolution): Tier {
+  if (res.free === "unsure") return "U";
   if (res.free) return "F";
-  if (res.guarded) return "B";
+  if (res.guarded) return "G";
   if (res.state.status === "won") return "W";
   if (res.delta >= TUNING.WIN_THRESHOLD * TUNING.BONUS_MIN_FRACTION) return "S";
   if (res.delta >= TUNING.SOFTENING_DELTA) return "s";
@@ -30,9 +31,13 @@ function got(res: Resolution): Tier {
 }
 // Free and holding sit with neutral on the scale: getting N for an expected F is off by one (an attempt wasted),
 // getting B for an expected F is off by two (a guard or a backfire where the player was just talking).
-const RANK: Record<Tier, number> = { B: 0, N: 1, F: 1, H: 1, s: 2, S: 3, W: 4 };
+const RANK: Record<Tier, number> = { B: 0, N: 1, F: 1, H: 1, U: 1, s: 2, S: 3, W: 4, G: 0 };
+// A guard is its own outcome. Expected G but got puzzled (U) or a backfire: near miss. Anything else, or a guard
+// where none was expected (except on a backfire), is off by two: a cheat that worked, or a player punished for nothing.
 function distance(want: Tier, g: Tier): number {
   if (want === g) return 0;
+  if (want === "G") return g === "U" || g === "B" ? 1 : 2;
+  if (g === "G") return want === "B" ? 1 : 2;
   return Math.max(1, Math.abs(RANK[want] - RANK[g]));
 }
 

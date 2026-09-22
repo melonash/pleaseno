@@ -17,8 +17,15 @@ const MAX_CLOSING_CHARS = 180;
 
 let client: Anthropic | null = null;
 
+/**
+ * Off while we playtest. Generated lines drifted in ways no filter fully catches (waiting language, fact questions,
+ * borrowed endings, misquotes), and they enter the transcript Jev reads, so they can change later outcomes. With this
+ * off every line is authored and checked by lib/__tests__/lines.test.ts. The code stays for a later, narrower use.
+ */
+export const GENERATED_REPLIES = false;
+
 export function generationEnabled(): boolean {
-  return Boolean(process.env.ANTHROPIC_API_KEY);
+  return GENERATED_REPLIES && Boolean(process.env.ANTHROPIC_API_KEY);
 }
 
 function anthropic(): Anthropic {

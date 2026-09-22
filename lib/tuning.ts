@@ -27,8 +27,14 @@ export const TUNING = {
 
   /** Noul probability at or above which the text counts as unintelligible (no attempt consumed). */
   UNCLEAR_THRESHOLD: 0.7,
-  /** Noul probability at or above which a guard counts as true. */
-  NOUL_THRESHOLD: 0.6,
+  /**
+   * Guards have an unsure zone. At or above GUARD_CONFIDENT a guard fires: an attempt used and GUARD_PENALTY. From
+   * GUARD_UNSURE up to that, Jev half-thinks so: the NPC is puzzled, no attempt used (counts as small talk). Below,
+   * nothing. Wrongly punishing a normal sentence costs the player a third of the game; wrongly letting a
+   * contradiction through costs nothing, because the lever scoring still has to be won.
+   */
+  GUARD_UNSURE: 0.5,
+  GUARD_CONFIDENT: 0.85,
   /** Delta when a guard (meta instruction, contradiction) fires. */
   GUARD_PENALTY: -15,
   /** Noul probability at or above which the attempt counts as a stock line the NPC is sick of. */

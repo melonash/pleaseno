@@ -49,7 +49,8 @@ export async function POST(req: Request) {
       pulls: Object.fromEntries(Object.entries(r.pulls).map(([k, v]) => [k, Math.round(v * 10) / 10])),
       lever: r.lever,
       guarded: r.guarded,
-      ...(r.free ? { nonTurn: "free" } : {}),
+      ...(r.free ? { nonTurn: r.free === "unsure" ? "unsure" : "free" } : {}),
+      guard: r.guard,
       stateToken: encodeState(r.state),
     };
     if (debug) {

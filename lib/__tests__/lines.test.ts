@@ -11,6 +11,9 @@ describe("line rules", () => {
       expect(scene.freeLines.warm.length).toBeGreaterThanOrEqual(4);
       expect(scene.freeLines.cool.length).toBeGreaterThanOrEqual(4);
       expect(scene.freeLines.impatient.length).toBeGreaterThanOrEqual(2);
+      expect(scene.freeLines.unsure.length).toBeGreaterThanOrEqual(3);
+      expect(scene.guardLines.meta.length).toBeGreaterThanOrEqual(2);
+      expect(scene.guardLines.contradiction.length).toBeGreaterThanOrEqual(2);
     });
 
     it(`${id}: no line short of a win tells the player to wait`, () => {
@@ -21,6 +24,7 @@ describe("line rules", () => {
         ...scene.freeLines.warm,
         ...scene.freeLines.cool,
         ...scene.freeLines.impatient,
+        ...scene.freeLines.unsure,
       ];
       expect(lines.filter((l) => soundsLikeWaiting(l.text)).map((l) => l.text)).toEqual([]);
     });
