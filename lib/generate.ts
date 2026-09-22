@@ -58,7 +58,7 @@ export function soundsLikeWaiting(line: string): boolean {
  * player an attempt for nothing. The NPC may ask why something matters, never for logistics.
  */
 const FACT_QUESTION =
-  /\b((why|how come|what made you)\b[^.?!]*\b(late|in time|on time|get here|make it|miss(ed)?|so fast|speeding)\b|how (fast|late|long)\b|what (seat|time|speed|flight|gate|happened)\b|where (were|are|did) you\b|when did you\b)/i;
+  /\b((why|how come|what made you)\b[^.?!]*\b(late|in time|on time|get here|make it|miss(ed)?|so fast|speeding)\b|how (fast|late|long)\b|what (seat|time|speed|flight|gate|happened)\b|where (were|are|did) you\b|where'?s\b|where is\b|(which|what) (hospital|address|street|road|terminal)\b|when did you\b)/i;
 
 export function asksForFacts(line: string): boolean {
   return FACT_QUESTION.test(line);

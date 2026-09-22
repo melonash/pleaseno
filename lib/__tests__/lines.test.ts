@@ -46,6 +46,8 @@ describe("line rules", () => {
     expect(asksForFacts("I haven't done anything yet. What made you four minutes late.")).toBe(true);
     expect(asksForFacts("How fast do you think you were going?")).toBe(true);
     expect(asksForFacts("What seat were you in?")).toBe(true);
+    expect(asksForFacts("Alright, that changes things a bit. Where's the hospital?")).toBe(true);
+    expect(asksForFacts("Which hospital?")).toBe(true);
     expect(asksForFacts("Tell me why it's worth the call.")).toBe(false);
     expect(asksForFacts("Why today?")).toBe(false);
     expect(asksForFacts("So what are you suggesting?")).toBe(false);

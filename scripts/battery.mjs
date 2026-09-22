@@ -22,6 +22,7 @@ export const BATTERY = {
     ["B", "My mother is in hospital and I have to get on this plane."],
     ["B", "The plane is RIGHT THERE. I'm a gold member. Just open the door."],
     ["B", "Open the door or I'm filming this and your manager will hear about it."],
+    ["S", "Honestly, I have no excuse. I lost track of time at the bar."],
   ],
   speeding: [
     ["W", "Yep, I was speeding. No excuse. I'd be grateful for a warning, and I'll keep it at 30, I promise."],
@@ -36,6 +37,7 @@ export const BATTERY = {
     ["B", "I didn't see the sign, and everyone else was going faster than me."],
     ["B", "I'm late for work, can you let me go this once?"],
     ["B", "My uncle is on the force and I know my rights. Your radar is probably off anyway."],
+    ["S", "Here's my licence. I know I was going too fast, officer."],
   ],
   inlaws: [
     ["W", "I know this matters to you and to them, and I'm sorry I wasn't listening. A whole weekend drains me. What if we host them for Sunday lunch here in two weeks, I cook, and I call your mum tonight to explain?"],
@@ -79,6 +81,7 @@ export const SEQUENCES = {
     [["F", "Okay."], ["N", "Do we have to?"]],
     [["S", PARTNER_SUNDAY], ["B", "Your dad doesn't even like me anyway."]],
     [["S", PARTNER_SUNDAY], ["H", PARTNER_SUNDAY]],
+    [["B", "I really can't this weekend, I've got a deadline."], ["N", "Fine, whatever, I'll come."]],
   ],
 };
 

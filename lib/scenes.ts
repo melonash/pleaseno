@@ -67,7 +67,7 @@ const gate: Scene = {
       "crying on cue",
       "the plane is RIGHT THERE",
     ],
-    levers: { compassion: 0.8, respect: 0.7, honesty: 0.7, self_interest: 0.9, fairness: 0.4, amusement: 0.6, pressure: -1.0, bribe: 0.6, guilt: -0.5 },
+    levers: { compassion: 0.8, respect: 0.7, honesty: 0.5, self_interest: 0.9, fairness: 0.4, amusement: 0.6, pressure: -1.0, bribe: 0.6, guilt: -0.5 },
   },
   openingLine: "Boarding's closed. The door's shut, and it's shut for everyone.",
   lines: {
@@ -185,7 +185,7 @@ const speeding: Scene = {
       "I need the toilet",
       "sudden tears",
     ],
-    levers: { compassion: 0.3, respect: 0.5, honesty: 0.8, self_interest: 1.0, fairness: 0.4, amusement: 0.5, pressure: -1.0, bribe: 0.9, guilt: -0.3 },
+    levers: { compassion: 0.3, respect: 0.5, honesty: 0.6, self_interest: 1.0, fairness: 0.4, amusement: 0.5, pressure: -1.0, bribe: 0.9, guilt: -0.3 },
   },
   openingLine: "Evening. Licence and registration, please.",
   lines: {
